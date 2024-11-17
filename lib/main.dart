@@ -1,8 +1,10 @@
+import 'package:aniview_app/accountPages/signupPage.dart';
 import 'package:aniview_app/pages/flashScreen.dart';
-import 'package:aniview_app/pages/loginPage.dart';
+import 'package:aniview_app/accountPages/loginPage.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+  void main(){
   runApp(const MyApp());
 }
 
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 255, 255, 255)),
         useMaterial3: true,
       ),
-      home: loginPage(),
+      home: SignUpPage(),
     );
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "200431842557",
+    "project_id": "aniview-app",
+    "storage_bucket": "aniview-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:200431842557:android:782d634306c3c861aefa94",
+        "android_client_info": {
+          "package_name": "com.example.aniview_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGwjpK11zym4zhkgN64WwJMPwiX-xhe74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

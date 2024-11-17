@@ -1,5 +1,5 @@
 import 'package:aniview_app/pages/MyHomePage.dart';
-import 'package:aniview_app/pages/loginPage.dart';
+import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
