@@ -1,5 +1,9 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
+import 'package:aniview_app/firebase_auth_implementation/auth.dart';
+import 'package:aniview_app/pages/MyHomePage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -9,15 +13,22 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>(); 
+  final Auth _auth = Auth();
 
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _reconfirmPasswordController = TextEditingController();
   bool _passwordVisible = false;
   bool _repasswordVisible = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _reconfirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,14 +178,10 @@ class _SignUpPageState extends State<SignUpPage> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
-          
           if (_formKey.currentState!.validate()) {
-            Navigator.push(
-              context, 
-              MaterialPageRoute(builder: (context) => loginPage()),
-            );
-          } else {
+            _signUp();
             
+          } else {
             print('Form is invalid');
           }
         },
@@ -207,76 +214,6 @@ class _SignUpPageState extends State<SignUpPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 25),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _firstNameController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color.fromARGB(255, 134, 91, 0).withOpacity(0.5),
-                  hintText: 'First Name',
-                  hintStyle: const TextStyle(color: Color.fromARGB(135, 238, 238, 238)),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide(color: Colors.orange, width: 2.0),
-                  ),
-                ),
-                style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'First name is required';
-                  }
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextFormField(
-                controller: _lastNameController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color.fromARGB(255, 134, 91, 0).withOpacity(0.5),
-                  hintText: 'Last Name',
-                  hintStyle: const TextStyle(color: Color.fromARGB(135, 238, 238, 238)),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide(color: Colors.orange, width: 2.0),
-                  ),
-                ),
-                style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Last name is required';
-                  }
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 25),
         TextFormField(
           controller: _emailController,
           decoration: InputDecoration(
@@ -301,7 +238,9 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
           style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
           validator: (value) {
-            if (value == null || value.isEmpty || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+            if (value == null || value.isEmpty) {
+              return 'Email is required';
+            } else if (!RegExp(r"^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$").hasMatch(value)) {
               return 'Please enter a valid email';
             }
             return null;
@@ -331,11 +270,14 @@ class _SignUpPageState extends State<SignUpPage> {
               borderSide: BorderSide(color: Colors.orange, width: 2.0),
             ),
             suffixIcon: IconButton(
-              icon: Icon(_passwordVisible ? Icons.visibility_off : Icons.visibility, color: const Color.fromARGB(135, 238, 238, 238)),
+              icon: Icon(
+                _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                color: Colors.white,
+              ),
               onPressed: () {
-                  setState(() {
-                    _passwordVisible = !_passwordVisible;
-                  });
+                setState(() {
+                  _passwordVisible = !_passwordVisible;
+                });
               },
             ),
           ),
@@ -343,6 +285,8 @@ class _SignUpPageState extends State<SignUpPage> {
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Password is required';
+            } else if (value.length < 6) {
+              return 'Password must be at least 6 characters long';
             }
             return null;
           },
@@ -354,7 +298,7 @@ class _SignUpPageState extends State<SignUpPage> {
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color.fromARGB(255, 134, 91, 0).withOpacity(0.5),
-            hintText: 'Reconfirm Password',
+            hintText: 'Confirm Password',
             hintStyle: const TextStyle(color: Color.fromARGB(135, 238, 238, 238)),
             border: const OutlineInputBorder(
               borderRadius: BorderRadius.only(
@@ -371,17 +315,22 @@ class _SignUpPageState extends State<SignUpPage> {
               borderSide: BorderSide(color: Colors.orange, width: 2.0),
             ),
             suffixIcon: IconButton(
-              icon: Icon(_repasswordVisible ? Icons.visibility_off : Icons.visibility, color: const Color.fromARGB(135, 238, 238, 238)),
+              icon: Icon(
+                _repasswordVisible ? Icons.visibility : Icons.visibility_off,
+                color: Colors.white,
+              ),
               onPressed: () {
                 setState(() {
-                    _repasswordVisible = !_repasswordVisible;
-                  });
+                  _repasswordVisible = !_repasswordVisible;
+                });
               },
             ),
           ),
           style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
           validator: (value) {
-            if (value != _passwordController.text) {
+            if (value == null || value.isEmpty) {
+              return 'Confirm Password is required';
+            } else if (value != _passwordController.text) {
               return 'Passwords do not match';
             }
             return null;
@@ -391,7 +340,33 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Container signUpHero() {
+  Future<void> _signUp() async {
+    try {
+      final result = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      if (result != null) {
+        Fluttertoast.showToast(
+      msg: "Account Created Successfully",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.SNACKBAR,
+    );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => loginPage()),
+        );
+      
+      }
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+ Container signUpHero() {
     return Container(
       height: 150,
       width: double.infinity,
@@ -403,5 +378,5 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
     );
-  }
+ }
 }

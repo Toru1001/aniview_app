@@ -1,3 +1,5 @@
+import 'package:aniview_app/accountPages/loginPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -12,16 +14,16 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(),
+      appBar: appBar(context),
       );
     
   }
 }
 
-AppBar appBar() {
+AppBar appBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white,
-      title: const Text('Breakfast',
+      title: const Text('Aniview',
       style: TextStyle(
         color: Colors.black,
         fontSize: 18,
@@ -50,8 +52,9 @@ AppBar appBar() {
       actions: [
         GestureDetector(
           onTap: () {
-
+            signOut(context);
           },
+          
         child: Container(
         margin: const EdgeInsets.all(10),
         alignment: Alignment.center,
@@ -68,5 +71,17 @@ AppBar appBar() {
         )
         
       ],
+      
     );
+    
   }
+
+  void signOut(BuildContext context) {
+  FirebaseAuth.instance.signOut();
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => const loginPage()),
+  );
+}
+
+ 

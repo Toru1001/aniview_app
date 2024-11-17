@@ -1,5 +1,9 @@
+import 'package:aniview_app/accountPages/forgotPassPage.dart';
 import 'package:aniview_app/accountPages/signupPage.dart';
+import 'package:aniview_app/firebase_auth_implementation/auth.dart';
+import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class loginPage extends StatefulWidget {
   const loginPage({super.key});
@@ -10,6 +14,18 @@ class loginPage extends StatefulWidget {
 
 class _loginPageState extends State<loginPage> {
   bool _passwordVisible = false;
+  final Auth _auth = Auth();
+
+ var _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +86,10 @@ class _loginPageState extends State<loginPage> {
     return Container(
             child: InkWell(
                 onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SignUpPage() ),);
-
+                Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => SignUpPage()),
+        );
                 },
                 child: const Text('Create Account',
                 style: TextStyle(
@@ -163,6 +181,7 @@ class _loginPageState extends State<loginPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    _signIn();
                   },
                   style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent, 
@@ -199,33 +218,36 @@ class _loginPageState extends State<loginPage> {
                 const SizedBox(
                   height: 25,
                 ),
-                TextField(
-decoration: InputDecoration(
-  filled: true,
-  fillColor: const Color.fromARGB(255, 134, 91, 0).withOpacity(0.5),
-  hintText: 'Email Address',
-  hintStyle: const TextStyle(color: Color.fromARGB(135, 238, 238, 238)),
-  border: const OutlineInputBorder(
-    borderRadius: BorderRadius.only(
-      topLeft: Radius.circular(12),
-      bottomRight: Radius.circular(12)
-    ),
-    borderSide: BorderSide.none, 
-  ),
-  focusedBorder: const OutlineInputBorder(
-    borderRadius: BorderRadius.only(
-      topLeft: Radius.circular(12),
-      bottomRight: Radius.circular(12)
-    ),
-    borderSide: BorderSide(color: Colors.orange, width: 2.0),
-  ),
-),
-style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    filled: true,
+                    
+                    fillColor: const Color.fromARGB(255, 134, 91, 0).withOpacity(0.5),
+                    hintText: 'Email Address',
+                    hintStyle: const TextStyle(color: Color.fromARGB(135, 238, 238, 238)),
+                    border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12)
+                      ),
+                      borderSide: BorderSide.none, 
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12)
+                      ),
+                      borderSide: BorderSide(color: Colors.orange, width: 2.0),
+                    ),
+                  ),
+                  style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+                  ),
 
                 const SizedBox(height: 25),
                 
-                TextField(
+                TextFormField(
+                  controller: _passwordController,
                   obscureText: !_passwordVisible,
                   decoration: InputDecoration(
                     filled: true,
@@ -260,7 +282,12 @@ style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                 SizedBox(height: 20,),
                  InkWell(
                 onTap: (){
-
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return ForgotPassPage();
+                      },),);
                 },
                 child: const Text('Forgot Password?',
                 style: TextStyle(
@@ -285,4 +312,34 @@ style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
             ),
           );
   }
+  Future<void> _signIn() async {
+    try {
+      final result = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      if (result != null) {
+        Fluttertoast.showToast(
+      msg: "Signed In",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.SNACKBAR,);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MyHomePage()),
+        );
+      } else{
+        Fluttertoast.showToast(
+      msg: "Incorrect Password",
+      toastLength: Toast.LENGTH_LONG,
+      backgroundColor: const Color.fromARGB(157, 0, 0, 0),
+      gravity: ToastGravity.SNACKBAR);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  
 }
