@@ -1,6 +1,5 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -93,7 +92,7 @@ Future<void> passwordReset() async {
                     ),
                     const Text('Forgot Password',
                   style: TextStyle(
-                    fontSize: 25,
+                    fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: Color.fromARGB(255, 255, 255, 255)
                   ),
@@ -103,8 +102,10 @@ Future<void> passwordReset() async {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 15,
-                    fontWeight: FontWeight.w500
-                  ),),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  ),
                     email_Form(),
                     reset_Button(),
                   const SizedBox(
@@ -113,6 +114,7 @@ Future<void> passwordReset() async {
                   SignInOptions()
                   ],
                 ),
+                
               ),
             ),
           ],
@@ -281,7 +283,7 @@ Future<void> passwordReset() async {
                 style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                 ),
 
-                SizedBox(height: 20,),
+                SizedBox(height: 15,),
                   ],
                 );
   }

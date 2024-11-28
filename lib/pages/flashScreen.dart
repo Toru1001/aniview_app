@@ -18,17 +18,8 @@ class _FlashscreenState extends State<Flashscreen>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     Future.delayed(const Duration(seconds: 5), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const loginPage()),
-      );
+    Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => loginPage()),);
     });
-  }
-
-  @override
-  void dispose(){
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-      overlays: SystemUiOverlay.values
-    );
   }
 
 
