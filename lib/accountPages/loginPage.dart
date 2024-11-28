@@ -169,7 +169,7 @@ class _loginPageState extends State<loginPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.white,
-                fontWeight: FontWeight.w200
+                fontWeight: FontWeight.w500
               ),
               ),
                 ],
@@ -329,7 +329,7 @@ class _loginPageState extends State<loginPage> {
         );
       } else{
         Fluttertoast.showToast(
-      msg: "Incorrect Password",
+      msg: "Incorrect Username or Password",
       toastLength: Toast.LENGTH_LONG,
       backgroundColor: const Color.fromARGB(157, 0, 0, 0),
       gravity: ToastGravity.SNACKBAR);

@@ -166,7 +166,7 @@ class _SignUpPageState extends State<SignUpPage> {
           style: TextStyle(
             fontSize: 12,
             color: Colors.white,
-            fontWeight: FontWeight.w200,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -352,10 +352,7 @@ class _SignUpPageState extends State<SignUpPage> {
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.SNACKBAR,
     );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => loginPage()),
-        );
+        Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => loginPage()),);
       
       }
       

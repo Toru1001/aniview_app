@@ -2,6 +2,7 @@ import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -63,10 +64,9 @@ AppBar appBar(BuildContext context) {
           color: Colors.white,
           borderRadius: BorderRadius.circular(10)
         ),
-        child: SvgPicture.asset('assets/icons/menu-dots.svg',
-        height: 28,
-        width: 28,
-        ),
+        child: Icon(Icons.logout_rounded,
+        size: 28,
+        )
       ),
         )
         
@@ -78,6 +78,11 @@ AppBar appBar(BuildContext context) {
 
   void signOut(BuildContext context) {
   FirebaseAuth.instance.signOut();
+  Fluttertoast.showToast(
+      msg: "Account Logged out Successfully",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.SNACKBAR,
+    );
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (context) => const loginPage()),
