@@ -2,6 +2,7 @@ import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/accountPages/signupPage.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/flashScreen.dart';
+import 'package:aniview_app/pages/subpages/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';

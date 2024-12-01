@@ -3,8 +3,9 @@ import 'package:aniview_app/models/carouselAnime.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-Future<List<CarouselAnime>> fetchSeasonalAnime() async {
-  const String url = "https://api.myanimelist.net/v2/anime/season/2024/fall?limit=6";
+Future<List<CarouselAnime>> fetchRankingAnime(final String type,final int limit) async {
+  
+  final String url = "https://api.myanimelist.net/v2/anime/ranking?ranking_type=$type&limit=$limit";
   
   final String? clientId = dotenv.env["API_KEY"];
   
