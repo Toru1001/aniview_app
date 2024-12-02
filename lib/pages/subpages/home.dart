@@ -1,9 +1,12 @@
+import 'dart:async';
+
+import 'package:aniview_app/api/get_currentSeason_api.dart';
+import 'package:aniview_app/models/anime_model.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:aniview_app/api/get_carousel_anime_api.dart';
-import 'package:aniview_app/models/carouselAnime.dart';
+import 'package:aniview_app/api/get_topAnime_api.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -23,16 +26,55 @@ class _HomeState extends State<Home> {
   List<Map<String, String>> topMoviesAnime = [];
   bool isLoading = true;
   bool hasError = false;
+  int _requestCount = 0; 
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    fetchAnimeData("airing", 6);
-    fetchTopAnimeData("all", 10);
-    fetchTopAiringAnimeData("airing", 10);
-    fetchTopFAVAnimeData("favorite", 10);
-    fetchTopOVAAnimeData("ova", 10);
-    fetchTopMoviesAnimeData("movie", 10);
+    _startRequestThrottling();
+    _startAutoRefresh();
+  }
+
+
+   void _startRequestThrottling() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _requestCount = 0;
+    });
+  }
+
+  void _startAutoRefresh() {
+  int elapsedSeconds = 0;
+  _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+    if (elapsedSeconds >= 10) {
+      timer.cancel();
+    } else {
+      _executeRequests();
+      elapsedSeconds++;
+    }
+  });
+}
+
+  Future<void> _executeRequests() async {
+    List<Function> requests = [
+      () => fetchAnimeData(6),
+      () => fetchTopAnimeData("", "", 10),
+      () => fetchTopAiringAnimeData("airing", "", 10),
+      () => fetchTopMoviesAnimeData("", "movie", 10),
+      () => fetchTopOVAAnimeData("", "ova", 10),
+      () => fetchTopFAVAnimeData("favorite", "", 10),
+    ];
+
+    for (int i = 0; i < requests.length; i++) {
+      if (_requestCount < 3) {
+        _requestCount++;
+        requests[i](); 
+
+        if (i < requests.length - 1) {
+          await Future.delayed(Duration(milliseconds: 333));
+        }
+      }
+    }
   }
 
   @override
@@ -105,21 +147,7 @@ class _HomeState extends State<Home> {
 
   Center _carousel() {
     return Center(
-      child: isLoading
-          ? const CircularProgressIndicator(color: Colors.redAccent)
-          : hasError
-              ? const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error, color: Colors.redAccent, size: 50),
-                    SizedBox(height: 8),
-                    Text(
-                      "Failed to load anime data",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ],
-                )
-              : Column(
+      child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CarouselSlider.builder(
@@ -161,9 +189,9 @@ class _HomeState extends State<Home> {
 
   void animateToSlide(int index) => _controller.animateToPage(index);
 
-  Future<void>  fetchAnimeData(final String type, final int limit) async {
+  Future<void>  fetchAnimeData(final int limit) async {
     try {
-      List<CarouselAnime> animeList = await fetchRankingAnime(type, limit);
+      List<Anime> animeList = await fetchcurrentSeasonAnime(limit);
       if (animeList.isNotEmpty) {
         setState(() {
           animeData = animeList
@@ -188,9 +216,9 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void>  fetchTopAnimeData(final String type, final int limit) async {
+  Future<void>  fetchTopAnimeData(final String filter,final String type, final int limit) async {
     try {
-      List<CarouselAnime> animeList = await fetchRankingAnime(type, limit);
+      List<Anime> animeList = await fetchTopAnime(filter,type, limit);
       if (animeList.isNotEmpty) {
         setState(() {
           topAnime = animeList
@@ -215,9 +243,9 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void>  fetchTopMoviesAnimeData(final String type, final int limit) async {
+  Future<void>  fetchTopMoviesAnimeData(final String filter,final String type, final int limit) async {
     try {
-      List<CarouselAnime> animeList = await fetchRankingAnime(type, limit);
+      List<Anime> animeList = await fetchTopAnime(filter,type, limit);
       if (animeList.isNotEmpty) {
         setState(() {
           topMoviesAnime = animeList
@@ -242,9 +270,9 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void>  fetchTopOVAAnimeData(final String type, final int limit) async {
+  Future<void>  fetchTopOVAAnimeData(final String filter,final String type, final int limit) async {
     try {
-      List<CarouselAnime> animeList = await fetchRankingAnime(type, limit);
+      List<Anime> animeList = await fetchTopAnime(filter,type, limit);
       if (animeList.isNotEmpty) {
         setState(() {
           topOVAAnime = animeList
@@ -269,9 +297,9 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void>  fetchTopFAVAnimeData(final String type, final int limit) async {
+  Future<void>  fetchTopFAVAnimeData(final String filter,final String type, final int limit) async {
     try {
-      List<CarouselAnime> animeList = await fetchRankingAnime(type, limit);
+      List<Anime> animeList = await fetchTopAnime(filter,type, limit);
       if (animeList.isNotEmpty) {
         setState(() {
           topFAVAnime = animeList
@@ -296,9 +324,9 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void>  fetchTopAiringAnimeData(final String type, final int limit) async {
+  Future<void>  fetchTopAiringAnimeData(final String filter,final String type, final int limit) async {
     try {
-      List<CarouselAnime> animeList = await fetchRankingAnime(type, limit);
+      List<Anime> animeList = await fetchTopAnime(filter,type, limit);
       if (animeList.isNotEmpty) {
         setState(() {
           topAiringAnime = animeList
@@ -323,57 +351,78 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Widget buildImage(String urlImage, String title, int index, String id) => Container(
-        height: 250,
-        width: 550,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: GestureDetector(
-          onTap: (){
-            print(id);
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(25),
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Image.network(
-                  urlImage,
-                  fit: BoxFit.cover,
-                  height: 200,
-                  width: double.infinity,
-                  alignment: const Alignment(0, -0.5),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.redAccent.withOpacity(0.5),
-                        spreadRadius: 10,
-                        blurRadius: 20,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10, bottom: 10),
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.none),
-                      textAlign: TextAlign.left,
+  Widget buildImage(String urlImage, String title, int index, String id) {
+  return Container(
+    height: 250,
+    width: 550,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(25),
+    ),
+    child: GestureDetector(
+      onTap: () {
+        print(id);
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Image.network(
+              urlImage,
+              fit: BoxFit.cover,
+              height: 200,
+              width: double.infinity,
+              alignment: const Alignment(0, -0.5),
+              loadingBuilder: (BuildContext context, Widget child,
+                  ImageChunkEvent? loadingProgress) {
+                if (loadingProgress == null) {
+                  return child; 
+                } else {
+                 
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.expectedTotalBytes != null
+                              ? (loadingProgress.cumulativeBytesLoaded /
+                                  (loadingProgress.expectedTotalBytes ?? 1))
+                              : null
+                          : null,
+                      color: Colors.redAccent,
                     ),
-                  ),
-                ),
-              ],
+                  );
+                }
+              },
             ),
-          ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.redAccent.withOpacity(0.5),
+                    spreadRadius: 10,
+                    blurRadius: 20,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10, bottom: 10),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.none),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
+}
 }
