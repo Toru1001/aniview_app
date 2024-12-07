@@ -12,7 +12,6 @@ import 'firebase_auth_implementation/auth.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await dotenv.load(fileName: "assets/plugins/.env");
   runApp(MyApp());
 }
 

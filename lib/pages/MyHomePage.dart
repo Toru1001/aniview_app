@@ -78,7 +78,6 @@ class _MyHomePageState extends State<MyHomePage> {
               color: isSelected ? Colors.redAccent : Colors.white,
               size: 30,
             ),
-            // Show the text next to the icon when selected
             if (isSelected)
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
@@ -115,12 +114,13 @@ AppBar appBar(BuildContext context) {
           alignment: Alignment.center,
           width: 37,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color.fromARGB(255, 21, 21, 33),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(
-            Icons.logout_rounded,
+            Icons.notifications,
             size: 28,
+            color: Colors.white70,
           ),
         ),
       ),

@@ -11,9 +11,6 @@ Future<List<Anime>> fetchcurrentSeasonAnime(final int limit) async {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      
-      print('Received Data: ${jsonData['data']}');
-      
       return Anime.fromJsonList(jsonData['data']);
     } else {
       throw Exception('Failed to fetch anime data. Status code: ${response.statusCode}');
