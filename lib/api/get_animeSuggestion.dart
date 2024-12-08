@@ -13,7 +13,7 @@ Future<List<Anime>> fetchSuggestion(final String id) async {
       final Map<String, dynamic> jsonData = jsonDecode(response.body);
       List<dynamic> entries = jsonData['data']; 
 
-      List<dynamic> limitedEntries = entries.take(10).toList();
+      List<dynamic> limitedEntries = entries.take(20).toList();
       return limitedEntries.map((entry) => Anime.fromJson(entry['entry'])).toList();
     } else {
       throw Exception('Failed to fetch anime data. Status code: ${response.statusCode}');

@@ -55,7 +55,7 @@ class AnimeDetailsModel {
     return AnimeDetailsModel(
       id: json['mal_id'].toString(),
       title: json['title'] ?? 'No title available',
-      img: json['trailer']['images']['maximum_image_url'],
+      img: json['trailer']['images']['maximum_image_url'] ?? '',
       alternative_img: json['images']['jpg']['large_image_url'],
       titles: combinedTitles,
       genres: combinedGenres,
