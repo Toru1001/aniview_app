@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:aniview_app/api/get_currentSeason_api.dart';
 import 'package:aniview_app/models/anime_model.dart';
+import 'package:aniview_app/pages/subpages/anime_details.dart';
+import 'package:aniview_app/pages/subpages/see_allAnime.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
 import 'package:aniview_app/widgets/review_feeds.dart';
 import 'package:flutter/material.dart';
@@ -37,8 +39,17 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _startRequestThrottling();
+    fetchAnimeData(6);
+    fetchTopAnimeData("", "", 7);
+    fetchTopAiringAnimeData("airing", "", 7);
     _startAutoRefresh();
     _currentPage = _animePage();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   void _startRequestThrottling() {
@@ -50,7 +61,7 @@ class _HomeState extends State<Home> {
   void _startAutoRefresh() {
     int elapsedSeconds = 0;
     _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (elapsedSeconds >= 15) {
+      if (elapsedSeconds == 3) {
         timer.cancel();
       } else {
         _executeRequests(elapsedSeconds);
@@ -64,10 +75,9 @@ class _HomeState extends State<Home> {
       _currentPage = _animePage();
     }
     List<Function> requests = [
-      () => fetchAnimeData(6),
-      () => fetchTopAnimeData("", "", 7),
-      () => fetchTopAiringAnimeData("airing", "", 7),
       () => fetchTopMoviesAnimeData("", "movie", 7),
+      () => fetchTopMoviesAnimeData("", "movie", 7),
+      () => fetchTopOVAAnimeData("", "ova", 7),
       () => fetchTopOVAAnimeData("", "ova", 7),
       () => fetchTopFAVAnimeData("favorite", "", 7),
       () => fetchTopFAVAnimeData("favorite", "", 7),
@@ -155,7 +165,7 @@ class _HomeState extends State<Home> {
   }
 
   Column _animeList(
-      final String title, List<Map<String, String>> anime, String type) {
+      final String title, List<Map<String, String>> anime, String type, String filter) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,7 +182,17 @@ class _HomeState extends State<Home> {
               ),
             ),
             GestureDetector.new(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SeeAllAnime(
+                    title: title, type: type,
+                    filter: filter,
+                  ),
+                ),
+              );
+              },
               child: const Text(
                 "See All >>",
                 style: TextStyle(
@@ -412,6 +432,14 @@ class _HomeState extends State<Home> {
       child: GestureDetector(
         onTap: () {
           print(id);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AnimeDetailsPage(
+                animeId: id.toString(),
+              ),
+            ),
+          );
         },
         child: ClipRRect(
           borderRadius: BorderRadius.circular(25),
@@ -485,11 +513,11 @@ class _HomeState extends State<Home> {
           padding: const EdgeInsets.only(left: 5, right: 5),
           child: Column(
             children: [
-              _animeList("Top Anime Series", topAnime, "all"),
-              _animeList("Top Airing", topAiringAnime, "airing"),
-              _animeList("Movies", topMoviesAnime, "movie"),
-              _animeList("OVA", topOVAAnime, "ova"),
-              _animeList("Most Favorites", topFAVAnime, "favorite"),
+              _animeList("Top Anime Series", topAnime, "",""),
+              _animeList("Top Airing", topAiringAnime, "", "airing"),
+              _animeList("Movies", topMoviesAnime, "movie", ""),
+              _animeList("OVA", topOVAAnime, "ova", ""),
+              _animeList("Most Favorites", topFAVAnime, "", "favorite"),
             ],
           ),
         ),
@@ -527,7 +555,9 @@ class _HomeState extends State<Home> {
                 imageUrl:
                     "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
               ),
-              SizedBox(height: 20,),
+              SizedBox(
+                height: 20,
+              ),
               ReviewCard(
                 username: "User1024",
                 rating: "5 star",

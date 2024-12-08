@@ -10,7 +10,7 @@ class ReplyReview extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2F3E),
+        color: const Color.fromARGB(255, 21, 21, 33),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

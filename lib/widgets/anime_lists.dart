@@ -1,3 +1,4 @@
+import 'package:aniview_app/pages/subpages/anime_details.dart';
 import 'package:flutter/material.dart';
 
 class AnimeListWidget extends StatefulWidget {
@@ -26,11 +27,14 @@ class _AnimeListWidgetState extends State<AnimeListWidget> {
           return GestureDetector(
             onTap: () {
               print(anime['id']);
-              // Navigator.pushNamed(
-              //   context,
-              //   '/details',
-              //   arguments: {'id': anime['id']},
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AnimeDetailsPage(
+                    animeId: anime['id'].toString()!,
+                  ),
+                ),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -55,10 +59,13 @@ class _AnimeListWidgetState extends State<AnimeListWidget> {
                             width: 120,
                             child: Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
                                     ? loadingProgress.expectedTotalBytes != null
-                                        ? (loadingProgress.cumulativeBytesLoaded /
-                                            (loadingProgress.expectedTotalBytes ??
+                                        ? (loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            (loadingProgress
+                                                    .expectedTotalBytes ??
                                                 1))
                                         : null
                                     : null,

@@ -1,11 +1,14 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/pages/subpages/home.dart';
+import 'package:aniview_app/pages/subpages/search.dart';
+import 'package:aniview_app/widgets/appBar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
+  
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -15,7 +18,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
   final List<Widget> _pages = [
     const Home(),
-    const Center(child: Text('Search Page', style: TextStyle(color: Colors.white))),
+    const SearchPage(),
     const Center(child: Text('My Watchlist Page', style: TextStyle(color: Colors.white))),
     const Center(child: Text('Profile Page', style: TextStyle(color: Colors.white))),
   ];
@@ -30,7 +33,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF201F31),
-      appBar: appBar(context),
+      appBar: const AniviewAppBar(),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         transitionBuilder: (child, animation) {
@@ -94,49 +97,4 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-}
-
-AppBar appBar(BuildContext context) {
-  return AppBar(
-    backgroundColor: const Color.fromARGB(255, 21, 21, 33),
-    title: Image.asset(
-      'assets/icons/ThinBorderLogo.png',
-      width: 150,
-      height: 150,
-    ),
-    actions: [
-      GestureDetector(
-        onTap: () {
-          signOut(context);
-        },
-        child: Container(
-          margin: const EdgeInsets.all(10),
-          alignment: Alignment.center,
-          width: 37,
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 21, 21, 33),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.notifications,
-            size: 28,
-            color: Colors.white70,
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
-void signOut(BuildContext context) {
-  FirebaseAuth.instance.signOut();
-  Fluttertoast.showToast(
-    msg: "Account Logged out Successfully",
-    toastLength: Toast.LENGTH_LONG,
-    gravity: ToastGravity.SNACKBAR,
-  );
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => const loginPage()),
-  );
 }
