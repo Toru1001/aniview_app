@@ -2,6 +2,7 @@ import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/accountPages/signupPage.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/flashScreen.dart';
+import 'package:aniview_app/pages/onBoarding.dart';
 import 'package:aniview_app/pages/subpages/anime_details.dart';
 import 'package:aniview_app/pages/subpages/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: MyHomePage(),
+      home: OnBoarding(),
     );
   }
 }

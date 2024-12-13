@@ -1,5 +1,6 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/pages/subpages/home.dart';
+import 'package:aniview_app/pages/subpages/profile.dart';
 import 'package:aniview_app/pages/subpages/search.dart';
 import 'package:aniview_app/widgets/appBar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,7 +21,7 @@ class _MyHomePageState extends State<MyHomePage> {
     const Home(),
     const SearchPage(),
     const Center(child: Text('My Watchlist Page', style: TextStyle(color: Colors.white))),
-    const Center(child: Text('Profile Page', style: TextStyle(color: Colors.white))),
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {

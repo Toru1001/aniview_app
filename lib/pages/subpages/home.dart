@@ -164,8 +164,8 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Column _animeList(
-      final String title, List<Map<String, String>> anime, String type, String filter) {
+  Column _animeList(final String title, List<Map<String, String>> anime,
+      String type, String filter) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -184,14 +184,15 @@ class _HomeState extends State<Home> {
             GestureDetector.new(
               onTap: () {
                 Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SeeAllAnime(
-                    title: title, type: type,
-                    filter: filter,
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SeeAllAnime(
+                      title: title,
+                      type: type,
+                      filter: filter,
+                    ),
                   ),
-                ),
-              );
+                );
               },
               child: const Text(
                 "See All >>",
@@ -211,7 +212,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Center _carousel() {
+  Widget _carousel() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -231,29 +232,20 @@ class _HomeState extends State<Home> {
               enableInfiniteScroll: false,
               autoPlayAnimationDuration: const Duration(seconds: 2),
               enlargeCenterPage: true,
-              onPageChanged: (index, reason) =>
-                  setState(() => activeIndex = index),
+              onPageChanged: (index, reason) {
+                if (activeIndex != index) {
+                  // Only update if index changes
+                  setState(() {
+                    activeIndex = index;
+                  });
+                }
+              },
             ),
           ),
-          const SizedBox(height: 12),
-          buildIndicator(),
         ],
       ),
     );
   }
-
-  Widget buildIndicator() => AnimatedSmoothIndicator(
-        onDotClicked: animateToSlide,
-        effect: const ExpandingDotsEffect(
-          dotWidth: 15,
-          dotHeight: 10,
-          activeDotColor: Colors.redAccent,
-        ),
-        activeIndex: activeIndex,
-        count: animeData.length,
-      );
-
-  void animateToSlide(int index) => _controller.animateToPage(index);
 
   Future<void> fetchAnimeData(final int limit) async {
     try {
@@ -513,7 +505,7 @@ class _HomeState extends State<Home> {
           padding: const EdgeInsets.only(left: 5, right: 5),
           child: Column(
             children: [
-              _animeList("Top Anime Series", topAnime, "",""),
+              _animeList("Top Anime Series", topAnime, "", ""),
               _animeList("Top Airing", topAiringAnime, "", "airing"),
               _animeList("Movies", topMoviesAnime, "movie", ""),
               _animeList("OVA", topOVAAnime, "ova", ""),

@@ -116,7 +116,7 @@ class _ReviewCardState extends State<ReviewCard> {
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(
                   widget.imageUrl,
-                  height: 200,
+                  height: 300,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),

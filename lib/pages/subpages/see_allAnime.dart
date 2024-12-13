@@ -24,11 +24,20 @@ class _SeeAllAnimeState extends State<SeeAllAnime> {
   List<Map<String, String>> animeData = [];
   bool isLoading = true;
   bool hasError = false;
+  bool isFetchingMore = false;
+  int currentPage = 1;
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     fetchAnimeData();
+    
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !isFetchingMore) {
+        fetchAnimeData();
+      }
+    });
   }
 
   @override
@@ -46,8 +55,7 @@ class _SeeAllAnimeState extends State<SeeAllAnime> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
                   onPressed: () {
                     Navigator.pop(context);
                   },
@@ -93,27 +101,44 @@ class _SeeAllAnimeState extends State<SeeAllAnime> {
   }
 
   Future<void> fetchAnimeData() async {
-    
+    if (isFetchingMore) return;
+
+    setState(() {
+      isFetchingMore = true;
+      if (currentPage == 1) {
+        isLoading = true;
+      }
+    });
+
     try {
-      List<Anime> animeList = await fetchSeeAll(widget.filter, widget.type);
+      List<Anime> animeList = await fetchSeeAll(widget.filter, widget.type, page: currentPage);
       
       setState(() {
-        animeData = animeList
-            .map((anime) => {
-                  'id': anime.id,
-                  'img': anime.img,
-                  'title': anime.title,
-                })
-            .toList();
+        animeData.addAll(
+          animeList.map((anime) => {
+            'id': anime.id,
+            'img': anime.img,
+            'title': anime.title,
+          }).toList(),
+        );
         isLoading = false;
+        isFetchingMore = false;
         hasError = animeList.isEmpty;
+        currentPage++; 
       });
     } catch (e) {
       setState(() {
         isLoading = false;
+        isFetchingMore = false;
         hasError = true;
       });
       print('Error fetching anime data: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }

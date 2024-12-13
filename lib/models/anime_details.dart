@@ -1,7 +1,6 @@
 class AnimeDetailsModel {
   final String id;
   final String title;
-  final String img;
   final String titles;
   final String genres;
   final String type;
@@ -15,7 +14,6 @@ class AnimeDetailsModel {
   AnimeDetailsModel({
     required this.id,
     required this.title,
-    required this.img,
     required this.titles,
     required this.genres,
     required this.type,
@@ -25,7 +23,6 @@ class AnimeDetailsModel {
     required this.synopsis,
     required this.alternative_img,
     required this.studio,
-    
   });
 
   factory AnimeDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -52,11 +49,15 @@ class AnimeDetailsModel {
     }
     String combinedGenres = genreList.where((genre) => genre.isNotEmpty).join(', ');
 
+    String studioName = 'N/A';
+    if (json.containsKey('studios') && json['studios'] is List && json['studios'].isNotEmpty) {
+      studioName = json['studios'][0]['name'] ?? 'N/A';
+    }
+
     return AnimeDetailsModel(
       id: json['mal_id'].toString(),
       title: json['title'] ?? 'No title available',
-      img: json['trailer']['images']['maximum_image_url'] ?? '',
-      alternative_img: json['images']['jpg']['large_image_url'],
+      alternative_img: json['images']['jpg']['large_image_url'] ?? '',
       titles: combinedTitles,
       genres: combinedGenres,
       type: json['type'] ?? 'No type available',
@@ -64,7 +65,7 @@ class AnimeDetailsModel {
       status: json['status'] ?? 'No status available',
       aired: json['aired']?['string']?.toString() ?? 'No airing information available',
       synopsis: json['synopsis'] ?? 'No synopsis available',
-      studio: json['studios'][0]['name'] ?? 'N/A',
+      studio: studioName,
     );
   }
 }

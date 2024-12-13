@@ -2,6 +2,8 @@ import 'package:aniview_app/api/get_animeDetails.dart';
 import 'package:aniview_app/api/get_animeSuggestion.dart';
 import 'package:aniview_app/models/anime_details.dart';
 import 'package:aniview_app/models/anime_model.dart';
+import 'package:aniview_app/widgets/addReviewModal.dart';
+import 'package:aniview_app/widgets/allReviewsModal.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
 import 'package:aniview_app/widgets/appBar.dart';
 import 'package:aniview_app/widgets/review.dart';
@@ -20,7 +22,6 @@ class AnimeDetailsPage extends StatefulWidget {
 }
 
 class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
-  
   @override
   void initState() {
     super.initState();
@@ -71,7 +72,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                                     _divider(),
                                     _synopsis(anime),
                                     _divider(),
-                                    _reviewsSection(),
+                                    _reviewsSection(anime),
                                     const SizedBox(
                                       height: 20,
                                     ),
@@ -93,21 +94,23 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
 
   Column _suggestedSection() {
     return Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "Suggested Anime",
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          color: Colors.redAccent,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 20,),
-                                      AnimeListWidget(animeList: animeSuggestion)
-                                    ],
-                                  );
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Suggested Anime",
+          style: TextStyle(
+            fontSize: 24,
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(
+          height: 20,
+        ),
+        AnimeListWidget(animeList: animeSuggestion)
+      ],
+    );
   }
 
   Future<void> fetchAnimeSuggestion() async {
@@ -137,7 +140,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
     }
   }
 
-  Column _reviewsSection() {
+  Column _reviewsSection(Map<String, String> anime) {
     return Column(
       children: [
         Row(
@@ -151,7 +154,23 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                   fontWeight: FontWeight.w500),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  backgroundColor: Color(0xFF2A2940),
+                  context: context,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (context) => AllReviewsModal(
+                    genre: anime['genres'] ?? '',
+                    id: anime['id'] ?? '',
+                    img: anime['alternative'] ?? '',
+                    title: anime['title'] ?? '',
+                  ),
+                );
+              },
               child: const Text(
                 'See All >>',
                 style: TextStyle(
@@ -183,16 +202,29 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         const SizedBox(
           height: 20,
         ),
-        _button(),
+        _button(anime),
       ],
     );
   }
 
-  Center _button() {
+  Center _button(Map<String, String> anime) {
     return Center(
       child: OutlinedButton(
         onPressed: () {
-          print("Button Pressed!");
+          showModalBottomSheet(
+            isScrollControlled: true,
+            backgroundColor: Color(0xFF2A2940),
+            context: context,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => AddReviewModal(
+              genre: anime['genres'] ?? '',
+              id: anime['id'] ?? '',
+              img: anime['alternative'] ?? '',
+              title: anime['title'] ?? '',
+            ),
+          );
         },
         style: OutlinedButton.styleFrom(
           side: const BorderSide(
@@ -517,9 +549,10 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
               borderRadius: BorderRadius.circular(100),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  ),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+              ),
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -547,8 +580,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         animeData = [
           {
             'id': anime.id ?? '',
-            'img': anime.img ?? anime.alternative_img,
-            'alternative': anime.alternative_img,
+            'alternative': anime.alternative_img ?? '',
             'title': anime.title ?? '',
             'titles': anime.titles ?? 'No titles available',
             'genres': anime.genres ?? 'No genres available',
@@ -569,6 +601,16 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         hasError = true;
       });
       debugPrint('Error fetching anime data: $e');
+      showErrorMessage(e.toString());
     }
+  }
+
+  void showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }
