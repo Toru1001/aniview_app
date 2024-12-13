@@ -2,6 +2,7 @@ import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/intro_screens/intro_page_1.dart';
 import 'package:aniview_app/pages/intro_screens/intro_page_2.dart';
 import 'package:aniview_app/pages/intro_screens/intro_page_3.dart';
+import 'package:aniview_app/pages/intro_screens/intro_page_4.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -25,13 +26,14 @@ class _OnBoardingState extends State<OnBoarding> {
             controller: _controller,
             onPageChanged: (index) {
               setState(() {
-                onLastPage = (index == 2);
+                onLastPage = (index == 3);
               });
             },
             children: [
               const IntroPage1(),
               const IntroPage2(),
               const IntroPage3(),
+              const IntroPage4(),
             ],
           ),
           Container(
@@ -53,7 +55,7 @@ class _OnBoardingState extends State<OnBoarding> {
                       )),
                   SmoothPageIndicator(
                     controller: _controller,
-                    count: 3,
+                    count: 4,
                     effect: const ExpandingDotsEffect(
                       dotColor: Colors.grey,
                       activeDotColor: Colors.redAccent,
