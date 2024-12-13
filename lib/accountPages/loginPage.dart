@@ -2,6 +2,8 @@ import 'package:aniview_app/accountPages/forgotPassPage.dart';
 import 'package:aniview_app/accountPages/signupPage.dart';
 import 'package:aniview_app/firebase_auth_implementation/auth.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
+import 'package:aniview_app/pages/onBoarding.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -312,6 +314,7 @@ class _loginPageState extends State<loginPage> {
             ),
           );
   }
+  
   Future<void> _signIn() async {
     try {
       final result = await _auth.signInWithEmailAndPassword(
@@ -319,20 +322,36 @@ class _loginPageState extends State<loginPage> {
         password: _passwordController.text.trim(),
       );
       if (result != null) {
+        var userRef = FirebaseFirestore.instance.collection('users').doc(result.uid);
+        var userDoc = await userRef.get();
+        if (userDoc.exists) {
+          var firstSignIn = userDoc.data()?['firstSignIn'] ?? false;
+
+          if (firstSignIn) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => OnBoarding()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MyHomePage()),
+            );
+          }
+        } else {
+          Fluttertoast.showToast(
+            msg: "User data not found",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.SNACKBAR,
+          );
+        }
+      } else {
         Fluttertoast.showToast(
-      msg: "Signed In",
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.SNACKBAR,);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MyHomePage()),
+          msg: "Incorrect Username or Password",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: const Color.fromARGB(157, 0, 0, 0),
+          gravity: ToastGravity.SNACKBAR,
         );
-      } else{
-        Fluttertoast.showToast(
-      msg: "Incorrect Username or Password",
-      toastLength: Toast.LENGTH_LONG,
-      backgroundColor: const Color.fromARGB(157, 0, 0, 0),
-      gravity: ToastGravity.SNACKBAR);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -340,6 +359,7 @@ class _loginPageState extends State<loginPage> {
       );
     }
   }
+
 
   
 }

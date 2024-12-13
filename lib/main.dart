@@ -5,6 +5,7 @@ import 'package:aniview_app/pages/flashScreen.dart';
 import 'package:aniview_app/pages/onBoarding.dart';
 import 'package:aniview_app/pages/subpages/anime_details.dart';
 import 'package:aniview_app/pages/subpages/home.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,16 +14,28 @@ import 'firebase_auth_implementation/auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+    print('Firebase initialized successfully.');
+    FirebaseFirestore.instance.settings = const Settings(
+  persistenceEnabled: true,
+  sslEnabled: true,
+  host: 'firestore.googleapis.com',
+);
+
+  } catch (e) {
+    print('Error initializing Firebase: $e');
+  }
   runApp(MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: OnBoarding(),
+      home: loginPage(),
     );
   }
 }

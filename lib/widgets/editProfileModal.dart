@@ -1,13 +1,138 @@
+import 'package:aniview_app/widgets/changePic.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EditProfileModal extends StatefulWidget {
-  const EditProfileModal({super.key});
+  final String firstName;
+  final String lastName;
+  final String username;
+  final String email;
+  final String imgUrl;
+  final Function() onProfileUpdated;
+
+  const EditProfileModal({
+    Key? key,
+    required this.firstName,
+    required this.lastName,
+    required this.username,
+    required this.email,
+    required this.imgUrl,
+    required this.onProfileUpdated,
+  }) : super(key: key);
 
   @override
   State<EditProfileModal> createState() => _EditProfileModalState();
 }
 
 class _EditProfileModalState extends State<EditProfileModal> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+
+  final List<String> imageUrls = [
+    'https://i.pinimg.com/736x/06/b8/45/06b8454a2ce7a8270c26ee70d0ebfd16.jpg',
+    'https://i.pinimg.com/736x/8e/d8/28/8ed828d79c3ebe987177a16da535e9cb.jpg',
+    'https://i.pinimg.com/736x/8c/08/bc/8c08bccd5c20fa27d0fb8300b29369fe.jpg',
+    'https://i.pinimg.com/736x/1e/cf/aa/1ecfaa7ad81dffd2952321cdf3763725.jpg',
+    'https://i.pinimg.com/736x/af/5c/0b/af5c0bff5273af1d8f944a3a6347d6a5.jpg',
+    'https://i.pinimg.com/736x/2e/a2/68/2ea2683e67f28283431f5f9b8d0b2f8d.jpg',
+    'https://i.pinimg.com/736x/6f/4e/ad/6f4eaddfb45810ecfbbefab432d77fd8.jpg',
+    'https://i.pinimg.com/736x/68/df/3f/68df3f3cab27704fbd7dfd0edfbcda58.jpg',
+  ];
+  String? selectedImage;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstNameController.text = widget.firstName;
+    _lastNameController.text = widget.lastName;
+    _usernameController.text = widget.username;
+    _emailController.text = widget.email;
+    selectedImage = widget.imgUrl;
+  }
+
+  Future<void> _saveProfile() async {
+    final String newFirstName = _firstNameController.text.isNotEmpty
+        ? _firstNameController.text
+        : widget.firstName;
+    final String newLastName = _lastNameController.text.isNotEmpty
+        ? _lastNameController.text
+        : widget.lastName;
+    final String newUsername = _usernameController.text.isNotEmpty
+        ? _usernameController.text
+        : widget.username;
+    final String newEmail =
+        _emailController.text.isNotEmpty ? _emailController.text : widget.email;
+
+    final bool confirmSave = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Changes'),
+              content: const Text('Are you sure you want to save the changes?'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!confirmSave) {
+      return;
+    }
+
+    try {
+      final user = _auth.currentUser;
+
+      if (newEmail != widget.email) {
+        final cred = EmailAuthProvider.credential(
+          email: user?.email ?? '',
+          password:
+              'userPassword', 
+        );
+
+        await user?.reauthenticateWithCredential(cred);
+        await user?.updateEmail(newEmail);
+      }
+
+      await _firestore.collection('users').doc(user?.uid).update({
+        'firstName': newFirstName,
+        'lastName': newLastName,
+        'username': newUsername,
+        'imageUrl':
+            selectedImage ?? widget.imgUrl, 
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+
+      widget.onProfileUpdated();
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -18,7 +143,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -33,8 +158,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
                         fontSize: 19,
                         color: Colors.grey,
                       ),
-                      softWrap: true,
-                      overflow: TextOverflow.visible,
                     ),
                   ),
                   const Text(
@@ -44,12 +167,10 @@ class _EditProfileModalState extends State<EditProfileModal> {
                       fontSize: 24,
                       color: Colors.white,
                     ),
-                    softWrap: true,
-                    overflow: TextOverflow.visible,
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Function
+                      _saveProfile();
                     },
                     child: const Text(
                       'Save',
@@ -63,7 +184,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
             Container(
               width: double.infinity,
               height: 130,
@@ -73,8 +193,8 @@ class _EditProfileModalState extends State<EditProfileModal> {
                 child: Row(
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
                         color: const Color(0xFF201F31),
                         borderRadius: BorderRadius.circular(100),
@@ -86,198 +206,155 @@ class _EditProfileModalState extends State<EditProfileModal> {
                       child: CircleAvatar(
                         radius: 50,
                         backgroundColor: Colors.grey[800],
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.grey[400],
-                          size: 60,
-                        ),
+                        backgroundImage: selectedImage != null
+                            ? NetworkImage(selectedImage!)
+                            : null,
+                        child: selectedImage == null
+                            ? Icon(
+                                Icons.person,
+                                color: Colors.grey[400],
+                                size: 60,
+                              )
+                            : null,
                       ),
                     ),
-                    SizedBox(
-                      width: 20,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: imageUrls.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedImage = imageUrls[index];
+                              });
+                            },
+                            child: Container(
+                              width:
+                                  95, // Same width as the main image's CircleAvatar
+                              height:
+                                  95, // Same height as the main image's CircleAvatar
+                              margin: const EdgeInsets.symmetric(horizontal: 5),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: selectedImage == imageUrls[index]
+                                      ? Colors.red
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              child: CircleAvatar(
+                                radius:
+                                    40,
+                                backgroundImage: NetworkImage(imageUrls[index]),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                    Text(
-                      'Select Picture',
-                      style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 25,
-                          fontWeight: FontWeight.w400,
-                          decoration: TextDecoration.underline,
-                          decorationColor: Colors.redAccent),
-                    )
                   ],
                 ),
               ),
             ),
             Padding(
-              padding: EdgeInsets.all(20),
-              child: Container(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "First Name",
-                      style: TextStyle(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildField(
+                      'First Name', widget.firstName, _firstNameController),
+                  const SizedBox(height: 10),
+                  _buildField(
+                      'Last Name', widget.lastName, _lastNameController),
+                  const SizedBox(height: 10),
+                  _buildField('Username', widget.username, _usernameController,
+                      prefixIcon: Icons.alternate_email),
+                  const SizedBox(height: 10),
+                  _buildField('Email', widget.email, _emailController,
+                      readOnly: true),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Password",
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Change Password Functionality
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF201F31),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: const BorderSide(
                           color: Colors.redAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 21, 21, 33),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const TextField(
-                        decoration: InputDecoration(
-                          hintText: 'First Name',
-                          hintStyle: TextStyle(color: Colors.grey),
-                          border: InputBorder.none,
-                        ),
-                        style: TextStyle(color: Colors.white),
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Last Name",
-                      style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 21, 21, 33),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Last Name',
-                          hintStyle: TextStyle(color: Colors.grey),
-                          border: InputBorder.none,
-                        ),
-                        style: TextStyle(color: Colors.white),
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Username",
-                      style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.only(top: 5),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 21, 21, 33),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const TextField(
-                        
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.alternate_email, size: 35,),
-                          hintText: 'Username',
-                          hintStyle: TextStyle(color: Colors.grey),
-                          border: InputBorder.none,
-                        ),
-                        style: TextStyle(color: Colors.white),
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Email",
-                      style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 21, 21, 33),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Email',
-                          hintStyle: TextStyle(color: Colors.grey),
-                          border: InputBorder.none,
-                        ),
-                        style: TextStyle(color: Colors.white),
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Password",
-                      style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF201F31),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: Colors.redAccent,
-                            width: 2, 
-                          ),
+                          width: 2,
                         ),
                       ),
-                      child: const Text(
-                        "Change Password",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
                     ),
-                  ],
-                ),
+                    child: const Text(
+                      "Change Password",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-            )
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildField(
+      String label, String initialValue, TextEditingController _controller,
+      {IconData? prefixIcon, final bool readOnly = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.redAccent,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          height: 50,
+          padding: const EdgeInsets.only(top: 10, bottom: 10, left: 10),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 21, 21, 33),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: TextField(
+            controller: _controller,
+            readOnly: readOnly,
+            decoration: InputDecoration(
+              hintText: initialValue,
+              hintStyle: const TextStyle(color: Colors.grey),
+              border: InputBorder.none,
+              prefixIcon: prefixIcon != null
+                  ? Icon(prefixIcon, size: 20, color: Colors.grey)
+                  : null,
+            ),
+            style: TextStyle(color: readOnly ? Colors.grey : Colors.white),
+          ),
+        ),
+      ],
     );
   }
 }

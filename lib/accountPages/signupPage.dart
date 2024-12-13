@@ -1,6 +1,7 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/firebase_auth_implementation/auth.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -342,20 +343,23 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _signUp() async {
     try {
-      final result = await _auth.createUserWithEmailAndPassword(
+      final User? user = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      if (result != null) {
+
+      if (user != null) {
         Fluttertoast.showToast(
-      msg: "Account Created Successfully",
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.SNACKBAR,
-    );
-        Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => loginPage()),);
-      
+          msg: "Account Created Successfully",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.SNACKBAR,
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => loginPage()),
+        );
       }
-      
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
