@@ -16,12 +16,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp();
+    FirebaseFirestore.instance.clearPersistence();
     print('Firebase initialized successfully.');
     FirebaseFirestore.instance.settings = const Settings(
   persistenceEnabled: true,
   sslEnabled: true,
   host: 'firestore.googleapis.com',
 );
+
+
 
   } catch (e) {
     print('Error initializing Firebase: $e');

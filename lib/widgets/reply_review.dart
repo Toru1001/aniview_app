@@ -1,8 +1,101 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 
-class ReplyReview extends StatelessWidget {
-  const ReplyReview({Key? key}) : super(key: key);
+class ReplyReview extends StatefulWidget {
+  final String reviewID;
+
+  const ReplyReview({
+    Key? key,
+    required this.reviewID,
+  }) : super(key: key);
+
+  @override
+  _ReplyReviewState createState() => _ReplyReviewState();
+}
+
+class _ReplyReviewState extends State<ReplyReview> {
+  final TextEditingController _replyController = TextEditingController();
+  String userImageUrl = ''; 
+
+  
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserImage();
+  }
+
+  
+  Future<void> _fetchUserImage() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    
+    if (currentUser != null) {
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+          setState(() {
+            userImageUrl = userData['imageUrl'] ?? ''; 
+          });
+        }
+      } catch (e) {
+        print('Error fetching user data: $e');
+      }
+    }
+  }
+
+  Future<void> _saveReply() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null && _replyController.text.isNotEmpty) {
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+          await FirebaseFirestore.instance
+              .collection('reviews')
+              .doc(widget.reviewID) // Use the review ID to get the correct review
+              .collection('replies') // Replies subcollection
+              .add({
+            'replyText': _replyController.text,
+            'userId': currentUser.uid,
+            'userFirstName': userData['firstName'] ?? 'Anonymous', // Get first name
+            'userLastName': userData['lastName'] ?? '', // Get last name
+            'userImageUrl': userData['imageUrl'] ?? '', // Get profile image URL
+            'date': Timestamp.now(), // Save current timestamp
+            'isReply' : true,
+          });
+
+          _replyController.clear(); // Clear the text field after saving the reply
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Reply added successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('User data not found')),
+          );
+        }
+      } catch (e) {
+        print("Error saving reply: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please write a reply before sending.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,23 +109,22 @@ class ReplyReview extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-                    height: 35,
-                    width: 35,
-                    margin: EdgeInsets.only(top: 5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: SvgPicture.asset(
-                      'assets/icons/circle-user.svg',
-                      height: 30,
-                      width: 30,
-                      color: Colors.grey,
-                    ),
-                  ),
+          // User image or a default icon if the imageUrl is not available
+          userImageUrl.isNotEmpty
+              ? CircleAvatar(
+                  radius: 25,
+                  
+                  backgroundImage: NetworkImage(userImageUrl),
+                )
+              : const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.person, color: Colors.white),
+                ),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: TextField(
+              controller: _replyController,
               decoration: InputDecoration(
                 hintText: 'Write a reply...',
                 hintStyle: TextStyle(color: Colors.grey),
@@ -44,9 +136,7 @@ class ReplyReview extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () {
-              // Handle sending the reply
-            },
+            onPressed: _saveReply,
             icon: const Icon(Icons.send, color: Colors.redAccent),
           ),
         ],

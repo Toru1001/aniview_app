@@ -151,7 +151,7 @@ class _ReviewCardState extends State<ReviewCard> {
             ],
           ),
         ),
-        if (showReplyContainer) const ReplyReview(),
+        // if (showReplyContainer) const ReplyReview(),
       ],
     );
   }

@@ -6,8 +6,12 @@ import 'package:aniview_app/widgets/addReviewModal.dart';
 import 'package:aniview_app/widgets/allReviewsModal.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
 import 'package:aniview_app/widgets/appBar.dart';
+import 'package:aniview_app/widgets/reply.dart';
 import 'package:aniview_app/widgets/review.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class AnimeDetailsPage extends StatefulWidget {
   final String animeId;
@@ -22,12 +26,43 @@ class AnimeDetailsPage extends StatefulWidget {
 }
 
 class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  double animeRating = 0.0;
   @override
   void initState() {
     super.initState();
     fetchAnimeData(widget.animeId);
     fetchAnimeSuggestion();
-    print(widget.animeId);
+    fetchAnimeRating(widget.animeId);
+  }
+
+  Future<void> fetchAnimeRating(String animeId) async {
+    try {
+      QuerySnapshot reviewsSnapshot = await _firestore
+          .collection('reviews')
+          .where('animeId', isEqualTo: animeId)
+          .get();
+
+      int totalRatings = 0;
+      double sumRatings = 0.0;
+
+      for (var doc in reviewsSnapshot.docs) {
+        Map<String, dynamic> reviewData = doc.data() as Map<String, dynamic>;
+        if (reviewData.containsKey('rating')) {
+          sumRatings += reviewData['rating'];
+          totalRatings++;
+        }
+      }
+
+      double averageRating = totalRatings > 0 ? sumRatings / totalRatings : 0.0;
+
+      setState(() {
+        animeRating = averageRating;
+      });
+    } catch (e) {
+      debugPrint('Error fetching anime rating: $e');
+    }
   }
 
   List<Map<String, String>> animeSuggestion = [];
@@ -35,6 +70,8 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
   bool isLoading = true;
   bool hasError = false;
   bool isExpanded = false;
+  bool isTop3 = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +142,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(
+        const SizedBox(
           height: 20,
         ),
         AnimeListWidget(animeList: animeSuggestion)
@@ -148,7 +185,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
           children: [
             const Text(
               'Reviews',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 20,
                   color: Colors.redAccent,
                   fontWeight: FontWeight.w500),
@@ -157,9 +194,9 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
               onTap: () {
                 showModalBottomSheet(
                   isScrollControlled: true,
-                  backgroundColor: Color(0xFF2A2940),
+                  backgroundColor: const Color(0xFF2A2940),
                   context: context,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(20)),
                   ),
@@ -178,26 +215,143 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                     color: Colors.redAccent,
                     fontWeight: FontWeight.w300),
               ),
-            )
+            ),
           ],
         ),
-        Container(
-          child: const Column(
-            children: [
-              ReviewWidget(
-                username: "User1024",
-                dateTime: "12/06/2024",
-                rating: 5,
-                comment: "I like the series overall <3. Hoping for season 2!",
-              ),
-              ReviewWidget(
-                username: "User1024",
-                dateTime: "12/06/2024",
-                comment: "I like the series overall <3. Hoping for season 2!",
-                isReply: true,
-              )
-            ],
-          ),
+        const SizedBox(height: 10),
+        Column(
+          children: [
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('reviews')
+                  .where('animeId', isEqualTo: anime['id'])
+                  .orderBy('date', descending: true)
+                  .limit(2)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+            
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error loading reviews'));
+                }
+            
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No reviews yet', style: TextStyle(color: Colors.grey, fontSize: 20),),);
+                }
+            
+                List<Widget> reviewWidgets = [];
+                for (var reviewDoc in snapshot.data!.docs) {
+                  var reviewData = reviewDoc.data() as Map<String, dynamic>;
+                  String userId = reviewData['userId'];
+                  String reviewId = reviewDoc.id; 
+            
+                  Timestamp timestamp = reviewData['date'];
+                  DateTime dateTime = timestamp.toDate();
+                  String formattedDate =
+                      DateFormat('MM/dd/yyyy HH:mm').format(dateTime);
+            
+                  reviewWidgets.add(FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .get(),
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+            
+                      if (userSnapshot.hasError) {
+                        return const Center(child: Text('Error loading user data'));
+                      }
+            
+                      if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                        return const Center(child: Text('User not found'));
+                      }
+            
+                      var userData = userSnapshot.data!;
+                      String userFirstName = userData['firstName'];
+                      String userLastName = userData['lastName'];
+                      String userImageUrl = userData['imageUrl'] ?? '';
+            
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          ReviewWidget(
+                            animeId: reviewData['animeId'],
+                            review: reviewData['review'],
+                            title: reviewData['title'],
+                            dateTime: formattedDate, 
+                            rating: reviewData['rating'],
+                            userFirstName: userFirstName,
+                            userLastName: userLastName,
+                            userImageUrl: userImageUrl,
+                            reviewId: reviewId,
+                          ),
+            
+                          StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('reviews')
+                                .doc(reviewId)
+                                .collection('replies')
+                                .where('isReply', isEqualTo: true)
+                                .orderBy('date', descending: true)
+                                .limit(1)
+                                .snapshots(),
+                            builder: (context, replySnapshot) {
+                              if (replySnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              }
+            
+                              if (replySnapshot.hasError) {
+                                return const Center(
+                                    child: Text('Error loading reply'));
+                              }
+            
+                              if (!replySnapshot.hasData ||
+                                  replySnapshot.data!.docs.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+            
+                              var replyDoc = replySnapshot.data!.docs.first;
+                              var replyData =
+                                  replyDoc.data() as Map<String, dynamic>;
+                              String replyText = replyData['replyText'] ?? '';
+                              String replyFirstName =
+                                  replyData['userFirstName'] ?? 'Unknown';
+                              String replyLastName =
+                                  replyData['userLastName'] ?? 'User';
+                              String replyImageUrl =
+                                  replyData['userImageUrl'] ?? '';
+            
+                              Timestamp replyTimestamp = replyData['date'];
+                              DateTime replyDateTime = replyTimestamp.toDate();
+                              String formattedReplyDate =
+                                  DateFormat('MM/dd/yyyy HH:mm')
+                                      .format(replyDateTime);
+            
+                              return ReplyWidget(
+                                replyText: replyText,
+                                userFirstName: replyFirstName,
+                                userLastName: replyLastName,
+                                userImageUrl: replyImageUrl,
+                                dateTime: formattedReplyDate,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ));
+                }
+            
+                return Column(children: reviewWidgets);
+              },
+            ),
+          ],
         ),
         const SizedBox(
           height: 20,
@@ -213,9 +367,9 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         onPressed: () {
           showModalBottomSheet(
             isScrollControlled: true,
-            backgroundColor: Color(0xFF2A2940),
+            backgroundColor: const Color(0xFF201F31),
             context: context,
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             builder: (context) => AddReviewModal(
@@ -229,7 +383,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         style: OutlinedButton.styleFrom(
           side: const BorderSide(
             color: Colors.redAccent,
-            width: 2, // Border width
+            width: 2,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -378,7 +532,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 330,
+                  width: 300,
                   child: Text(
                     anime['title'] ?? '',
                     style: const TextStyle(
@@ -398,11 +552,71 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                 )
               ],
             ),
-            GestureDetector(
-              child: const Icon(
-                Icons.bookmark_add_outlined,
-                color: Colors.redAccent,
-                size: 35,
+            Container(
+              child: Row(
+                children: [
+                  isTop3
+                      ? GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Remove from Top 3'),
+                                  content: const Text(
+                                      'Are you sure you want to remove this anime from your Top 3?'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        Navigator.of(context).pop();
+                                        await removeFromTop3(anime['id'] ?? '');
+                                        refreshPage();
+                                      },
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Transform.rotate(
+                            angle: -90 * (3.14 / 180),
+                            child: Icon(
+                              Icons.double_arrow_sharp,
+                              color: Colors.redAccent,
+                              size: 35,
+                            ),
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: () {
+                            addFavoriteAnime(anime['id'] ?? '');
+                            refreshPage();
+                          },
+                          child: Transform.rotate(
+                            angle: -90 * (3.14 / 180),
+                            child: Icon(
+                              Icons.double_arrow_sharp,
+                              color: Colors.grey,
+                              size: 35,
+                            ),
+                          ),
+                        ),
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Icon(
+                      Icons.bookmark_add_outlined,
+                      color: Colors.redAccent,
+                      size: 35,
+                    ),
+                  ),
+                ],
               ),
             )
           ],
@@ -415,7 +629,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Column(
+              Column(
                 children: [
                   Text(
                     'Rating',
@@ -425,7 +639,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                         fontSize: 18),
                   ),
                   Text(
-                    '8.4',
+                    animeRating.toString(),
                     style: TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.w400,
@@ -576,6 +790,11 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
   Future<void> fetchAnimeData(final String animeId) async {
     try {
       AnimeDetailsModel anime = await fetchAnimeDetails(widget.animeId);
+      final user = _auth.currentUser;
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(user?.uid);
+      final userDoc = await userRef.get();
+
       setState(() {
         animeData = [
           {
@@ -594,6 +813,12 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         ];
         isLoading = false;
         hasError = false;
+
+        if (userDoc.exists) {
+          List<String> topAnime =
+              List<String>.from(userDoc.data()?['top3'] ?? []);
+          isTop3 = topAnime.contains(animeId);
+        }
       });
     } catch (e) {
       setState(() {
@@ -612,5 +837,139 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  Future<void> addFavoriteAnime(String animeId) async {
+    try {
+      final user = _auth.currentUser;
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(user?.uid);
+      final userDoc = await userRef.get();
+
+      if (userDoc.exists) {
+        List<String> topAnime =
+            List<String>.from(userDoc.data()?['top3'] ?? []);
+
+        if (topAnime.contains(animeId)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Anime already exists in your Top 3 list!",
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          return;
+        }
+
+        if (topAnime.length >= 3) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Top 3 Limit Reached! You can't add more anime.",
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          return;
+        }
+
+        topAnime.add(animeId);
+        await userRef.update({'top3': topAnime});
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: const Text(
+              "Anime added successfully.",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.greenAccent,
+          ),
+        );
+      } else {
+        await userRef.set({
+          'top3': [animeId],
+        }, SetOptions(merge: true));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Anime added successfully.",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.greenAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  Future<void> removeFromTop3(String animeId) async {
+    try {
+      final user = _auth.currentUser;
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(user?.uid);
+      final userDoc = await userRef.get();
+
+      if (userDoc.exists) {
+        List<String> topAnime =
+            List<String>.from(userDoc.data()?['top3'] ?? []);
+
+        topAnime.remove(animeId);
+
+        await userRef.update({'top3': topAnime});
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Anime removed from Top 3.",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.greenAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  Future<void> refreshPage() async {
+    _updateLoadingState(true);
+    try {
+      await fetchAnimeData(widget.animeId);
+      await fetchAnimeSuggestion();
+      _updateErrorState(false);
+    } catch (error) {
+      _updateErrorState(true);
+    } finally {
+      _updateLoadingState(false);
+    }
+  }
+
+  void _updateLoadingState(bool state) {
+    setState(() {
+      isLoading = state;
+    });
+  }
+
+  void _updateErrorState(bool state) {
+    setState(() {
+      hasError = state;
+    });
   }
 }

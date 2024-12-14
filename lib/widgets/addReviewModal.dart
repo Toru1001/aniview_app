@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AddReviewModal extends StatefulWidget {
@@ -20,6 +22,61 @@ class AddReviewModal extends StatefulWidget {
 
 class _AddReviewModalState extends State<AddReviewModal> {
   int _rating = 0;
+  TextEditingController _reviewController = TextEditingController();
+
+  Future<void> _saveReview() async {
+    try {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        await FirebaseFirestore.instance.collection('reviews').add({
+          'animeId': widget.id,
+          'date': Timestamp.now(),
+          'imgUrl': widget.img,
+          'rating': _rating,
+          'review': _reviewController.text,
+          'title': widget.title,
+          'userId': currentUser.uid, // Store the userId
+        });
+
+        print("Review saved successfully!");
+
+        // Show a snackbar to inform the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Review added successfully!',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.greenAccent,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        Navigator.pop(context); // Close the modal
+      }
+    } catch (e) {
+      print("Error saving review: $e");
+      // Show an error snackbar if something goes wrong
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to add review. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -64,9 +121,7 @@ class _AddReviewModalState extends State<AddReviewModal> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        // Save action here
-                        print('Review saved with rating: $_rating');
-                        Navigator.pop(context);
+                        _saveReview(); // Call the save function
                       },
                       child: const Text(
                         'Save',
@@ -80,9 +135,9 @@ class _AddReviewModalState extends State<AddReviewModal> {
                   ],
                 ),
               ),
-          
+
               const SizedBox(height: 10),
-          
+
               Container(
                 width: double.infinity,
                 height: 130,
@@ -95,7 +150,9 @@ class _AddReviewModalState extends State<AddReviewModal> {
                           widget.img,
                           height: 150,
                         ),
-                        SizedBox(width: 20,),
+                        SizedBox(
+                          width: 20,
+                        ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -121,10 +178,9 @@ class _AddReviewModalState extends State<AddReviewModal> {
                       ],
                     )),
               ),
-          
+
               const SizedBox(height: 20),
-          
-              // Rate Section
+
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20),
                 child: Column(
@@ -138,10 +194,9 @@ class _AddReviewModalState extends State<AddReviewModal> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-          
+
                     const SizedBox(height: 10),
-          
-                    // Star Rating Widget
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
@@ -192,7 +247,8 @@ class _AddReviewModalState extends State<AddReviewModal> {
                         color: const Color.fromARGB(255, 21, 21, 33),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const TextField(
+                      child: TextField(
+                        controller: _reviewController,
                         decoration: InputDecoration(
                           hintText: 'Write a reply...',
                           hintStyle: TextStyle(color: Colors.grey),

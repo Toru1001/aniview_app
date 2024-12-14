@@ -9,7 +9,6 @@ class EditProfileModal extends StatefulWidget {
   final String username;
   final String email;
   final String imgUrl;
-  final Function() onProfileUpdated;
 
   const EditProfileModal({
     Key? key,
@@ -18,7 +17,7 @@ class EditProfileModal extends StatefulWidget {
     required this.username,
     required this.email,
     required this.imgUrl,
-    required this.onProfileUpdated,
+    // required this.onProfileUpdated,
   }) : super(key: key);
 
   @override
@@ -52,7 +51,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
     _firstNameController.text = widget.firstName;
     _lastNameController.text = widget.lastName;
     _usernameController.text = widget.username;
-    _emailController.text = widget.email;
     selectedImage = widget.imgUrl;
   }
 
@@ -66,8 +64,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
     final String newUsername = _usernameController.text.isNotEmpty
         ? _usernameController.text
         : widget.username;
-    final String newEmail =
-        _emailController.text.isNotEmpty ? _emailController.text : widget.email;
 
     final bool confirmSave = await showDialog<bool>(
           context: context,
@@ -101,17 +97,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
     try {
       final user = _auth.currentUser;
 
-      if (newEmail != widget.email) {
-        final cred = EmailAuthProvider.credential(
-          email: user?.email ?? '',
-          password:
-              'userPassword', 
-        );
-
-        await user?.reauthenticateWithCredential(cred);
-        await user?.updateEmail(newEmail);
-      }
-
       await _firestore.collection('users').doc(user?.uid).update({
         'firstName': newFirstName,
         'lastName': newLastName,
@@ -121,11 +106,12 @@ class _EditProfileModalState extends State<EditProfileModal> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
+        const SnackBar(content: Text('Profile updated successfully'), backgroundColor: Colors.redAccent,),
+        
       );
 
-      widget.onProfileUpdated();
-      Navigator.pop(context);
+      // widget.onProfileUpdated();
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -199,9 +185,10 @@ class _EditProfileModalState extends State<EditProfileModal> {
                         color: const Color(0xFF201F31),
                         borderRadius: BorderRadius.circular(100),
                         border: Border.all(
-                          color: const Color(0xFF201F31),
+                          color: Colors.redAccent,
                           width: 5,
                         ),
+                      
                       ),
                       child: CircleAvatar(
                         radius: 50,

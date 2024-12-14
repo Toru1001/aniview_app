@@ -1,20 +1,30 @@
-import 'package:aniview_app/widgets/reply_review.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:aniview_app/widgets/reply_review.dart';
 
 class ReviewWidget extends StatefulWidget {
-  final String username;
-  final int rating;
-  final String comment;
+  final String animeId;
+  final String review;
+  final String title;
   final String dateTime;
+  final int rating;
+  final String userFirstName;
+  final String userLastName;
+  final String userImageUrl;
+  final String reviewId;
   final bool isReply;
 
   const ReviewWidget({
     Key? key,
-    required this.username,
-    this.rating = 0,
-    required this.comment,
+    required this.animeId,
+    required this.review,
+    required this.title,
     required this.dateTime,
+    required this.rating,
+    required this.userFirstName,
+    required this.userLastName,
+    required this.userImageUrl,
+    required this.reviewId,
     this.isReply = false,
   }) : super(key: key);
 
@@ -27,10 +37,14 @@ class _ReviewWidgetState extends State<ReviewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    String userFullName = '${widget.userFirstName} ${widget.userLastName}';
+
     return Align(
       alignment: widget.isReply ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        width: widget.isReply ? MediaQuery.of(context).size.width * 0.8 : MediaQuery.of(context).size.width,
+        width: widget.isReply
+            ? MediaQuery.of(context).size.width * 0.8
+            : MediaQuery.of(context).size.width,
         margin: widget.isReply
             ? const EdgeInsets.only(top: 8)
             : const EdgeInsets.only(top: 10),
@@ -46,22 +60,21 @@ class _ReviewWidgetState extends State<ReviewWidget> {
           children: [
             Row(
               children: [
-                Container(
-                  height: 35,
-                  width: 35,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/icons/circle-user.svg',
-                    height: 30,
-                    width: 30,
-                    color: Colors.grey,
-                  ),
-                ),
+                // Display user image or a default icon if userImageUrl is not provided
+                widget.userImageUrl.isNotEmpty
+                    ? CircleAvatar(
+                        radius: 25,
+                        backgroundImage: NetworkImage(widget.userImageUrl),
+                      )
+                    : SvgPicture.asset(
+                        'assets/icons/circle-user.svg', // Default icon
+                        height: 30,
+                        width: 30,
+                        color: Colors.grey,
+                      ),
                 const SizedBox(width: 10),
                 Text(
-                  widget.username,
+                  userFullName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -69,6 +82,7 @@ class _ReviewWidgetState extends State<ReviewWidget> {
                   ),
                 ),
                 const Spacer(),
+                // Display rating as stars or a number (only for non-replies)
                 if (!widget.isReply) ...[
                   const Icon(
                     Icons.star,
@@ -77,7 +91,7 @@ class _ReviewWidgetState extends State<ReviewWidget> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    "${widget.rating} star",
+                    "${widget.rating} star${widget.rating != 1 ? 's' : ''}",
                     style: const TextStyle(
                       color: Colors.redAccent,
                       fontSize: 16,
@@ -88,7 +102,7 @@ class _ReviewWidgetState extends State<ReviewWidget> {
             ),
             const SizedBox(height: 10),
             Text(
-              widget.comment,
+              widget.review,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -105,24 +119,24 @@ class _ReviewWidgetState extends State<ReviewWidget> {
                 fontWeight: FontWeight.w300,
               ),
             ),
-            
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    showReplyContainer = !showReplyContainer;
-                  });
-                },
-                child: const Text(
-                  "Reply",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  showReplyContainer = !showReplyContainer;
+                });
+              },
+              child: const Text(
+                "Reply",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              if (showReplyContainer) const ReplyReview(),
+            ),
+            
+            if (showReplyContainer) ReplyReview(reviewID: widget.reviewId),
           ],
         ),
       ),
