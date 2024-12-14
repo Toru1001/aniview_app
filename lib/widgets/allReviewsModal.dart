@@ -129,7 +129,7 @@ class _AllReviewsModalState extends State<AllReviewsModal> {
                         Timestamp timestamp = reviewData['date'];
                         DateTime dateTime = timestamp.toDate();
                         String formattedDate =
-                            DateFormat('MM/dd/yyyy HH:mm').format(dateTime);
+                            DateFormat('MM/dd/yyyy hh:mm a').format(dateTime);
 
                         reviewWidgets.add(
                           FutureBuilder<DocumentSnapshot>(
@@ -207,7 +207,7 @@ class _AllReviewsModalState extends State<AllReviewsModal> {
                                         DateTime replyDateTime =
                                             replyTimestamp.toDate();
                                         String formattedReplyDate =
-                                            DateFormat('MM/dd/yyyy HH:mm')
+                                            DateFormat('MM/dd/yyyy hh:mm a')
                                                 .format(replyDateTime);
 
                                         replyWidgets.add(

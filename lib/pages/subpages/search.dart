@@ -1,6 +1,8 @@
 import 'package:aniview_app/api/get_searchedAnime.dart';
 import 'package:aniview_app/models/anime_model.dart';
 import 'package:aniview_app/pages/subpages/anime_details.dart';
+import 'package:aniview_app/pages/subpages/user_profile.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class SearchPage extends StatefulWidget {
@@ -11,12 +13,7 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final List<Map<String, String>> users = [
-    {'username': 'Frieren101'},
-    {'username': 'Frieren19'},
-    {'username': 'frierenTes'},
-    {'username': 'Frieren35'}
-  ];
+  List<QueryDocumentSnapshot> searchedUsers = [];
   List<Map<String, String>> animeData = [];
   final _searchedText = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -41,7 +38,7 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-   Future<void> fetchAnimeData({bool isNextPage = false}) async {
+  Future<void> fetchAnimeData({bool isNextPage = false}) async {
     if (!isNextPage && _searchedText.text.isEmpty) {
       setState(() {
         hasSearched = false;
@@ -110,6 +107,40 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  Future<void> searchUsers() async {
+    if (_searchedText.text.isEmpty) return;
+
+    setState(() {
+      isLoading = true;
+      hasError = false;
+      searchedUsers = [];
+    });
+
+    try {
+      print('Searching for users with query: ${_searchedText.text}');
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isGreaterThanOrEqualTo: _searchedText.text)
+          .where('username', isLessThanOrEqualTo: '${_searchedText.text}\uf8ff')
+          .get();
+
+      final docs = querySnapshot.docs;
+      print('Found ${docs.length} users');
+
+      setState(() {
+        searchedUsers = docs;
+        isLoading = false;
+        hasSearched = true;
+      });
+    } catch (e) {
+      print('Error searching users: $e');
+      setState(() {
+        isLoading = false;
+        hasError = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,131 +151,125 @@ class _SearchPageState extends State<SearchPage> {
             _searchBar(),
             Expanded(
               child: hasSearched
-                  ? isLoading && animeData.isEmpty
+                  ? isLoading && animeData.isEmpty && searchedUsers.isEmpty
                       ? const Center(
                           child: CircularProgressIndicator(
                             color: Colors.redAccent,
                           ),
                         )
-                      : animeData.isNotEmpty
-                          ? SingleChildScrollView(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 20),
-                                  _searchedUsers(),
-                                  const SizedBox(height: 20),
-                                  const Text(
-                                    'Anime',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red,
-                                    ),
+                      : SingleChildScrollView(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 20),
+                              _searchedUsers(),
+                              const SizedBox(height: 20),
+                              const Text(
+                                'Anime',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              if (animeData.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'No anime found.',
+                                    style: TextStyle(color: Colors.grey, fontSize: 18),
                                   ),
-                                  const SizedBox(height: 10),
-                                  GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      crossAxisSpacing: 20.0,
-                                      childAspectRatio: 0.55,
-                                    ),
-                                    itemCount: animeData.length,
-                                    itemBuilder: (context, index) {
-                                      final anime = animeData[index];
-                                      return GestureDetector(
-                                        onTap: () {
-                                          if (anime['id'] != null) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => AnimeDetailsPage(
-                                                  animeId: anime['id']!,
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Image.network(
-                                                anime['img'] ?? '',
+                                ),
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 20.0,
+                                  childAspectRatio: 0.55,
+                                ),
+                                itemCount: animeData.length,
+                                itemBuilder: (context, index) {
+                                  final anime = animeData[index];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (anime['id'] != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AnimeDetailsPage(
+                                              animeId: anime['id']!,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Image.network(
+                                            anime['img'] ?? '',
+                                            height: 250,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Container(
                                                 height: 250,
                                                 width: double.infinity,
-                                                fit: BoxFit.cover,
-                                                loadingBuilder: (context, child, loadingProgress) {
-                                                  if (loadingProgress == null) return child;
-                                                  return Container(
-                                                    height: 250,
-                                                    width: double.infinity,
-                                                    color: const Color.fromARGB(255, 21, 21, 33),
-                                                    child: Center(
-                                                      child: CircularProgressIndicator(
-                                                        value: loadingProgress.expectedTotalBytes != null
-                                                            ? loadingProgress.cumulativeBytesLoaded /
-                                                                (loadingProgress.expectedTotalBytes ?? 1)
-                                                            : null,
-                                                        color: Colors.redAccent,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                                errorBuilder: (context, error, stackTrace) => Container(
-                                                  height: 180,
-                                                  color: Colors.grey,
-                                                  child: const Icon(Icons.broken_image, color: Colors.white),
+                                                color: const Color.fromARGB(255, 21, 21, 33),
+                                                child: Center(
+                                                  child: CircularProgressIndicator(
+                                                    value: loadingProgress.expectedTotalBytes != null
+                                                        ? loadingProgress.cumulativeBytesLoaded /
+                                                            (loadingProgress.expectedTotalBytes ?? 1)
+                                                        : null,
+                                                    color: Colors.redAccent,
+                                                  ),
                                                 ),
-                                              ),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) => Container(
+                                              height: 180,
+                                              color: Colors.grey,
+                                              child: const Icon(Icons.broken_image, color: Colors.white),
                                             ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              anime['title'] ?? 'No Title',
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                  if (isFetchingNextPage)
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          color: Colors.redAccent,
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          anime['title'] ?? 'No Title',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                ],
+                                  );
+                                },
                               ),
-                            )
-                          : hasError
-                              ? const Center(
-                                  child: Text(
-                                    'Failed to load data.',
-                                    style: TextStyle(color: Colors.white),
+                              if (isFetchingNextPage)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.redAccent,
+                                    ),
                                   ),
-                                )
-                              : const Center(
-                                  child: Text(
-                                    'No results found.',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                )
+                                ),
+                            ],
+                          ),
+                        )
                   : const Center(
                       child: Text(
                         'Enter something in the Search',
@@ -264,7 +289,7 @@ class _SearchPageState extends State<SearchPage> {
       padding: const EdgeInsets.all(10),
       child: TextField(
         controller: _searchedText,
-        onSubmitted: (_) => fetchAnimeData(),
+        onSubmitted: (_) => {fetchAnimeData(), searchUsers()},
         style: const TextStyle(color: Colors.grey),
         decoration: InputDecoration(
           filled: true,
@@ -299,28 +324,51 @@ class _SearchPageState extends State<SearchPage> {
           height: 110,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: users.length,
+            itemCount: searchedUsers.length,
             itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.grey[300],
-                      child: const Icon(Icons.person, size: 40, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      users[index]['username']!,
-                      style: const TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                  ],
+              return GestureDetector(
+                onTap: () {
+                  print(searchedUsers[index].id);
+                  Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfilePage(
+                userId: searchedUsers[index].id,
+              ),
+            ),
+          );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundImage: NetworkImage(searchedUsers[index]['imageUrl'] ?? ''),
+                        child: searchedUsers[index]['imageUrl'] == null
+                            ? Icon(Icons.person, size: 40, color: Colors.grey)
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        searchedUsers[index]['username'] ?? 'No username',
+                        style: const TextStyle(fontSize: 14, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
           ),
         ),
+        if (searchedUsers.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'No users found.',
+              style: TextStyle(color: Colors.grey, fontSize: 18),
+            ),
+          ),
       ],
     );
   }

@@ -34,7 +34,6 @@ class ReplyWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Display user image or a default icon if no image is available
               userImageUrl.isNotEmpty
                   ? CircleAvatar(
                       radius: 25,
@@ -69,7 +68,6 @@ class ReplyWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          // Display the timestamp of the reply
           Text(
             dateTime,
             style: const TextStyle(

@@ -6,9 +6,12 @@ import 'package:aniview_app/pages/subpages/anime_details.dart';
 import 'package:aniview_app/pages/subpages/see_allAnime.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
 import 'package:aniview_app/widgets/review_feeds.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:aniview_app/api/get_topAnime_api.dart';
 
@@ -518,52 +521,139 @@ class _HomeState extends State<Home> {
   }
 
   Widget _reviewsPage() {
-    return ListView(
-      children: const [
-        Padding(
-          padding: EdgeInsets.only(left: 5, right: 5),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(
-                "Review Feed",
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.redAccent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              ReviewCard(
-                username: "User1024",
-                rating: "5 star",
-                animeTitle: "Sousou no Frieren",
-                reviewText:
-                    "I like the series overall <3. Hoping for season 2!",
-                date: "12/03/2024",
-                imageUrl:
-                    "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              ReviewCard(
-                username: "User1024",
-                rating: "5 star",
-                animeTitle: "Sousou no Frieren",
-                reviewText:
-                    "I like the series overall <3. Hoping for season 2!",
-                date: "12/03/2024",
-                imageUrl:
-                    "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
-              ),
-            ],
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  return ListView(
+    children: [
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Anime Reviews",
+            style: TextStyle(
+              fontSize: 24,
+              color: Colors.redAccent,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: 10),
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .snapshots(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                    child: CircularProgressIndicator(color: Colors.redAccent));
+              }
+
+              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                return const Center(
+                  child: Text("User data not found."),
+                );
+              }
+
+              final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .collection('friends')
+                    .where('isFriend', isEqualTo: true)
+                    .snapshots(),
+                builder: (context, friendsSnapshot) {
+                  if (friendsSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                        child: CircularProgressIndicator(color: Colors.redAccent));
+                  }
+
+                  if (!friendsSnapshot.hasData || friendsSnapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text("No friends found."),
+                    );
+                  }
+
+                  final friendIds = friendsSnapshot.data!.docs
+                      .map((doc) => doc['friendId'] as String)
+                      .toList();
+                  friendIds.add(userId!);
+
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('reviews')
+                        .where('userId', whereIn: friendIds)
+                        .orderBy('date', descending: true)
+                        .snapshots(),
+                    builder: (context, reviewsSnapshot) {
+                      if (reviewsSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                            child: CircularProgressIndicator(color: Colors.redAccent));
+                      }
+
+                      if (!reviewsSnapshot.hasData || reviewsSnapshot.data!.docs.isEmpty) {
+                        return Container(
+                          height: 100,
+                          width: double.infinity,
+                          child: const Center(
+                            child: Text(
+                              "No reviews yet.",
+                              style: TextStyle(fontSize: 18, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final reviews = reviewsSnapshot.data!.docs;
+
+                      return Column(
+                        children: reviews.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final rawDate = data['date'];
+                          String formattedDate;
+
+                          try {
+                            if (rawDate is Timestamp) {
+                              formattedDate = DateFormat('MM/dd/yyyy hh:mm a')
+                                  .format(rawDate.toDate());
+                            } else if (rawDate is String) {
+                              final parsedDate = DateTime.tryParse(rawDate);
+                              if (parsedDate != null) {
+                                formattedDate = DateFormat('MM/dd/yyyy hh:mm a')
+                                    .format(parsedDate);
+                              } else {
+                                formattedDate = 'Invalid Date';
+                              }
+                            } else {
+                              formattedDate = 'Unknown Date';
+                            }
+                          } catch (e) {
+                            formattedDate = 'Error Formatting Date';
+                          }
+
+                          String reviewId = doc.id;
+
+                          return ReviewCard(
+                            reviewId: reviewId,
+                            userid: data['userId'] ?? 'Unknown User',
+                            rating: data['rating'].toString() ?? '',
+                            animeTitle: data['title'] ?? 'Unknown Anime',
+                            reviewText: data['review'] ?? '',
+                            date: formattedDate,
+                            imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
+                          );
+                        }).toList(),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
 }

@@ -250,7 +250,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                   Timestamp timestamp = reviewData['date'];
                   DateTime dateTime = timestamp.toDate();
                   String formattedDate =
-                      DateFormat('MM/dd/yyyy HH:mm').format(dateTime);
+                      DateFormat('MM/dd/yyyy hh:mm a').format(dateTime);
             
                   reviewWidgets.add(FutureBuilder<DocumentSnapshot>(
                     future: FirebaseFirestore.instance
@@ -330,7 +330,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                               Timestamp replyTimestamp = replyData['date'];
                               DateTime replyDateTime = replyTimestamp.toDate();
                               String formattedReplyDate =
-                                  DateFormat('MM/dd/yyyy HH:mm')
+                                  DateFormat('MM/dd/yyyy hh:mm a')
                                       .format(replyDateTime);
             
                               return ReplyWidget(

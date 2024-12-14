@@ -1,3 +1,4 @@
+import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/api/get_animeDetails.dart';
 import 'package:aniview_app/models/anime_details.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
@@ -6,6 +7,8 @@ import 'package:aniview_app/widgets/review_feeds.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -19,28 +22,34 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<Map<String, String>> animeData = [];
-  bool isLoadingUser = true; 
-  bool isLoadingAnime = true; 
+  bool isLoadingUser = true;
+  bool isLoadingAnime = true;
   bool hasError = false;
   Map<String, dynamic>? cachedUserData;
+  int friendsCount = 0;
+  int reviewsCount = 0;
 
   @override
   void initState() {
     super.initState();
     refreshPage();
+    _countFriends();
+    _countReviews();
   }
 
   Future<void> refreshPage() async {
     setState(() {
       isLoadingUser = true;
-      isLoadingAnime = true; 
-      animeData = []; 
+      isLoadingAnime = true;
+      animeData = [];
     });
 
     try {
-      await getTop3(); 
-      cachedUserData = null; 
-      await _getUserData(); 
+      await getTop3();
+      cachedUserData = null;
+      await _getUserData();
+      await _countFriends();
+      _countReviews();
       setState(() {
         hasError = false;
       });
@@ -50,8 +59,51 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     } finally {
       setState(() {
-        isLoadingUser = false; 
+        isLoadingUser = false;
         isLoadingAnime = false;
+      });
+    }
+  }
+
+  Future<void> _countReviews() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("No user logged in");
+
+      final snapshot = await _firestore
+          .collection('reviews')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      setState(() {
+        reviewsCount = snapshot.size;  
+      });
+    } catch (e) {
+      debugPrint("Error fetching reviews count: $e");
+      setState(() {
+        reviewsCount = 0;
+      });
+    }
+  }
+
+  Future<void> _countFriends() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("No user logged in");
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('friends')
+          .get();
+
+      setState(() {
+        friendsCount = snapshot.size;
+      });
+    } catch (e) {
+      debugPrint("Error fetching friends count: $e");
+      setState(() {
+        friendsCount = 0;
       });
     }
   }
@@ -129,7 +181,8 @@ class _ProfilePageState extends State<ProfilePage> {
         child: FutureBuilder<Map<String, dynamic>>(
           future: _getUserData(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && isLoadingUser) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                isLoadingUser) {
               return const Center(
                 child: CircularProgressIndicator(color: Colors.redAccent),
               );
@@ -198,8 +251,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white),
                 onPressed: () {
-                  _auth.signOut();
-                  Navigator.pop(context);
+                  signOut(context);
                 },
               ),
             ),
@@ -257,7 +309,7 @@ class _ProfilePageState extends State<ProfilePage> {
             );
 
             if (updated == true) {
-              await refreshPage(); 
+              await refreshPage();
             }
           },
           style: ElevatedButton.styleFrom(
@@ -276,7 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStatItem("Reviews", userData['reviewsCount'] ?? "0"),
+            _buildStatItem("Reviews", reviewsCount.toString() ?? "0"),
             const Text(
               "|",
               style: TextStyle(
@@ -292,7 +344,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 30,
                   fontWeight: FontWeight.w200),
             ),
-            _buildStatItem("Friends", userData['friendsCount'] ?? "0"),
+            _buildStatItem("Friends", friendsCount.toString() ?? "0"),
           ],
         ),
       ],
@@ -324,6 +376,19 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void signOut(BuildContext context) {
+    FirebaseAuth.instance.signOut();
+    Fluttertoast.showToast(
+      msg: "Account Logged out Successfully",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.SNACKBAR,
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const loginPage()),
+    );
+  }
+
   Divider _divider() {
     return const Divider(
       thickness: .5,
@@ -350,12 +415,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: CircularProgressIndicator(color: Colors.redAccent),
               )
             : animeData.isEmpty
-                ? const Center(
-                    child: Text(
-                      "No anime found in your Top 3 list!",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                ? Container(
+                    height: 100,
+                    child: const Center(
+                      child: Text(
+                        "Did not add Top 3 yet",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   )
@@ -366,10 +434,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Column _myReviews() {
-    return const Column(
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           "Anime Reviews",
           style: TextStyle(
             fontSize: 24,
@@ -377,17 +446,73 @@ class _ProfilePageState extends State<ProfilePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 10),
-        ReviewCard(
-                username: "User1024",
-                rating: "5 star",
-                animeTitle: "Sousou no Frieren",
-                reviewText:
-                    "I like the series overall <3. Hoping for season 2!",
-                date: "12/03/2024",
-                imageUrl:
-                    "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
-              ),
+        const SizedBox(height: 10),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('reviews')
+              .where('userId', isEqualTo: userId)
+              .orderBy('date', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: CircularProgressIndicator(color: Colors.redAccent));
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Container(
+                height: 100,
+                width: double.infinity,
+                child: Center(
+                  child: const Text(
+                    "No reviews yet.",
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ),
+              );
+            }
+
+            final reviews = snapshot.data!.docs;
+
+            return Column(
+              children: reviews.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final rawDate = data['date'];
+                String formattedDate;
+
+                try {
+                  if (rawDate is Timestamp) {
+                    formattedDate = DateFormat('MM/dd/yyyy hh:mm a')
+                        .format(rawDate.toDate());
+                  } else if (rawDate is String) {
+                    final parsedDate = DateTime.tryParse(rawDate);
+                    if (parsedDate != null) {
+                      formattedDate =
+                          DateFormat('MM/dd/yyyy hh:mm a').format(parsedDate);
+                    } else {
+                      formattedDate = 'Invalid Date';
+                    }
+                  } else {
+                    formattedDate = 'Unknown Date';
+                  }
+                } catch (e) {
+                  formattedDate = 'Error Formatting Date';
+                }
+
+                String reviewId = doc.id;
+
+                return ReviewCard(
+                  reviewId: reviewId,
+                  userid: data['userId'] ?? 'Unknown User',
+                  rating: data['rating'].toString() ?? '',
+                  animeTitle: data['title'] ?? 'Unknown Anime',
+                  reviewText: data['review'] ?? '',
+                  date: formattedDate,
+                  imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
+                );
+              }).toList(),
+            );
+          },
+        ),
       ],
     );
   }
