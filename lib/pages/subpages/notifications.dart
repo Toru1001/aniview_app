@@ -1,3 +1,4 @@
+import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/subpages/user_profile.dart';
 import 'package:aniview_app/widgets/appBar.dart';
 import 'package:aniview_app/widgets/viewReview.dart';
@@ -79,7 +80,10 @@ class _NotificationsState extends State<Notifications> {
                 IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => MyHomePage()),
+            );
                   },
                 ),
                 const Expanded(

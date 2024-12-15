@@ -230,7 +230,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: Colors.redAccent));
                 }
 
                 if (snapshot.hasError) {
@@ -265,7 +265,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                     builder: (context, userSnapshot) {
                       if (userSnapshot.connectionState ==
                           ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator(color: Colors.redAccent));
                       }
 
                       if (userSnapshot.hasError) {
@@ -309,7 +309,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                               if (replySnapshot.connectionState ==
                                   ConnectionState.waiting) {
                                 return const Center(
-                                    child: CircularProgressIndicator());
+                                    child: CircularProgressIndicator(color: Colors.redAccent));
                               }
 
                               if (replySnapshot.hasError) {

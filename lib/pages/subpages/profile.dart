@@ -1,4 +1,5 @@
-import 'package:aniview_app/accountPages/loginPage.dart';
+
+import 'package:aniview_app/accountPages/login_page.dart';
 import 'package:aniview_app/api/get_animeDetails.dart';
 import 'package:aniview_app/models/anime_details.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
@@ -410,7 +411,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const loginPage()),
+      MaterialPageRoute(builder: (context) => const LogInPage()),
     );
   }
 
@@ -457,6 +458,8 @@ class _ProfilePageState extends State<ProfilePage> {
       ],
     );
   }
+
+  
 
   Column _myReviews() {
     final userId = FirebaseAuth.instance.currentUser?.uid;

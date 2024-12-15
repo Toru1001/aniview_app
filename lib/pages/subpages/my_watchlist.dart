@@ -140,7 +140,7 @@ class _MyWatchlistState extends State<MyWatchlist> {
       stream: userDoc.collection('watchlist').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Colors.redAccent,));
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -181,7 +181,7 @@ class _MyWatchlistState extends State<MyWatchlist> {
                 String backgroundImage = '';
 
                 if (animeSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: Colors.redAccent,));
                 }
 
                 if (animeSnapshot.hasData &&

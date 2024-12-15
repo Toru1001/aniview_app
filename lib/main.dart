@@ -1,45 +1,30 @@
-import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/accountPages/login_page.dart';
-import 'package:aniview_app/accountPages/signupPage.dart';
-import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/flashScreen.dart';
-import 'package:aniview_app/pages/onBoarding.dart';
-import 'package:aniview_app/pages/subpages/anime_details.dart';
-import 'package:aniview_app/pages/subpages/home.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:aniview_app/pages/subpages/home.dart';
+import 'package:aniview_app/pages/subpages/my_watchlist.dart';
+import 'package:aniview_app/pages/subpages/notifications.dart';
+import 'package:aniview_app/pages/subpages/profile.dart';
+import 'package:aniview_app/pages/subpages/search.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'firebase_auth_implementation/auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-    FirebaseFirestore.instance.clearPersistence();
-    print('Firebase initialized successfully.');
-    FirebaseFirestore.instance.settings = const Settings(
-  persistenceEnabled: true,
-  sslEnabled: true,
-  host: 'firestore.googleapis.com',
-);
-
-
-
-  } catch (e) {
-    print('Error initializing Firebase: $e');
-  }
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
+  static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      title: 'Aniview App',
       debugShowCheckedModeBanner: false,
-      home: LogInPage(),
+      navigatorObservers: [routeObserver],
+      home: const Flashscreen(),
     );
   }
 }

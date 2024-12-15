@@ -1,28 +1,28 @@
 import 'package:aniview_app/accountPages/forgot_password.dart';
+import 'package:aniview_app/accountPages/login_page.dart';
 import 'package:aniview_app/accountPages/sign_up.dart';
 import 'package:aniview_app/firebase_auth_implementation/auth.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/onBoarding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class LogInPage extends StatefulWidget {
-  const LogInPage({super.key});
+class ForgotPasswordPage extends StatefulWidget {
+  const ForgotPasswordPage({super.key});
 
   @override
-  State<LogInPage> createState() => _LogInPageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _LogInPageState extends State<LogInPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   bool _passwordVisible = false;
   final Auth _auth = Auth();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -48,7 +48,7 @@ class _LogInPageState extends State<LogInPage> {
               child: Column(
                 children: [
                   const Text(
-                    'Welcome Back',
+                    'Forgot Password',
                     style: TextStyle(
                       fontSize: 30,
                       color: Colors.white,
@@ -82,57 +82,12 @@ class _LogInPageState extends State<LogInPage> {
                     ),
                     style: const TextStyle(color: Colors.white),
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_passwordVisible,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color.fromARGB(255, 21, 21, 33),
-                      hintText: 'Password',
-                      hintStyle: const TextStyle(color: Color.fromARGB(135, 238, 238, 238)),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
-                        ),
-                        borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible ? Icons.visibility_off : Icons.visibility,
-                          color: const Color.fromARGB(135, 238, 238, 238),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 10),
-                   Align(
-                    alignment: Alignment.centerRight,
-                    child: GestureDetector(
-                      onTap: (){
-                    Navigator.push(
-                        context, MaterialPageRoute(builder: (context) => const ForgotPasswordPage()));
-                
-                      },
-                      child: const Text(
-                        'Forgot password?',
-                        style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 20),
                   Container(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        _signIn();
+                        passwordReset();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
@@ -141,7 +96,7 @@ class _LogInPageState extends State<LogInPage> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
                       ),
                       child: const Text(
-                        'SIGN IN',
+                        'Reset Password',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.white,
@@ -158,17 +113,17 @@ class _LogInPageState extends State<LogInPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Don't have an account?",
+                  "Have an account?",
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 const SizedBox(width: 5),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
-                        context, MaterialPageRoute(builder: (context) => const SignUpPage()));
+                        context, MaterialPageRoute(builder: (context) => const LogInPage()));
                   },
                   child: const Text(
-                    "Create Account",
+                    "Sign in",
                     style: TextStyle(color: Colors.redAccent, fontSize: 16),
                   ),
                 ),
@@ -191,65 +146,61 @@ class _LogInPageState extends State<LogInPage> {
     );
   }
 
-  Future<void> _signIn() async {
-    try {
-      final result = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+  Future<void> passwordReset() async {
+  try {
+    await FirebaseAuth.instance
+        .sendPasswordResetEmail(email: _emailController.text.trim());
 
-      if (result != null) {
-        var userRef = FirebaseFirestore.instance.collection('users').doc(result.uid);
-        var userDoc = await userRef.get();
-
-        if (userDoc.exists) {
-          var firstSignIn = userDoc.data()?['firstSignIn'] ?? false;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.redAccent,
-              content: Text(
-                'Logged in as ${result.email}',
-                style: const TextStyle(color: Colors.white),
-              ),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-
-          if (firstSignIn) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const OnBoarding()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MyHomePage()),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User data not found', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.grey,
-            ),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Incorrect Username or Password', style: TextStyle(color: Colors.white)),
-            backgroundColor: Colors.grey,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Center(
+          child: Text(
+            "If an account exists, a password reset email has been sent.",
+            style: TextStyle(color: Colors.white),
           ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}', style: const TextStyle(color: Colors.white)),
-          backgroundColor: Colors.grey,
         ),
-      );
+        backgroundColor: Colors.redAccent,
+        duration: Duration(seconds: 3),
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LogInPage()),
+    );
+  } on FirebaseAuthException catch (e) {
+    String errorMessage;
+    if (e.code == 'user-not-found') {
+      errorMessage = 'No account found with this email address.';
+    } else if (e.code == 'invalid-email') {
+      errorMessage = 'The email address is invalid.';
+    } else {
+      errorMessage = 'An error occurred: ${e.message}';
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          errorMessage,
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "An unexpected error occurred: $e",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
+}
+
+
 }

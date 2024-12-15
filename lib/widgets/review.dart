@@ -60,7 +60,6 @@ class _ReviewWidgetState extends State<ReviewWidget> {
           children: [
             Row(
               children: [
-                // Display user image or a default icon if userImageUrl is not provided
                 widget.userImageUrl.isNotEmpty
                     ? CircleAvatar(
                         radius: 25,
