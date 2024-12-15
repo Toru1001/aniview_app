@@ -3,6 +3,7 @@ import 'package:aniview_app/models/anime_model.dart';
 import 'package:aniview_app/pages/subpages/anime_details.dart';
 import 'package:aniview_app/pages/subpages/user_profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SearchPage extends StatefulWidget {
@@ -108,38 +109,43 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> searchUsers() async {
-    if (_searchedText.text.isEmpty) return;
+  if (_searchedText.text.isEmpty) return;
+
+  setState(() {
+    isLoading = true;
+    hasError = false;
+    searchedUsers = [];
+  });
+
+  try {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    print('Searching for users with query: ${_searchedText.text}');
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('username', isGreaterThanOrEqualTo: _searchedText.text)
+        .where('username', isLessThanOrEqualTo: '${_searchedText.text}\uf8ff')
+        .get();
+
+    final docs = querySnapshot.docs
+        .where((doc) => doc.id != currentUserId) // Exclude current user
+        .toList();
+
+    print('Found ${docs.length} users (excluding current user)');
 
     setState(() {
-      isLoading = true;
-      hasError = false;
-      searchedUsers = [];
+      searchedUsers = docs;
+      isLoading = false;
+      hasSearched = true;
     });
-
-    try {
-      print('Searching for users with query: ${_searchedText.text}');
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isGreaterThanOrEqualTo: _searchedText.text)
-          .where('username', isLessThanOrEqualTo: '${_searchedText.text}\uf8ff')
-          .get();
-
-      final docs = querySnapshot.docs;
-      print('Found ${docs.length} users');
-
-      setState(() {
-        searchedUsers = docs;
-        isLoading = false;
-        hasSearched = true;
-      });
-    } catch (e) {
-      print('Error searching users: $e');
-      setState(() {
-        isLoading = false;
-        hasError = true;
-      });
-    }
+  } catch (e) {
+    print('Error searching users: $e');
+    setState(() {
+      isLoading = false;
+      hasError = true;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -178,9 +184,11 @@ class _SearchPageState extends State<SearchPage> {
                               if (animeData.isEmpty)
                                 const Padding(
                                   padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'No anime found.',
-                                    style: TextStyle(color: Colors.grey, fontSize: 18),
+                                  child: Center(
+                                    child: Text(
+                                      'No anime found.',
+                                      style: TextStyle(color: Colors.grey, fontSize: 18),
+                                    ),
                                   ),
                                 ),
                               GridView.builder(
@@ -362,8 +370,7 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
         if (searchedUsers.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
+          Center(
             child: Text(
               'No users found.',
               style: TextStyle(color: Colors.grey, fontSize: 18),

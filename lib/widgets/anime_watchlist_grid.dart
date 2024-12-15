@@ -3,19 +3,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class AnimeGridWidget extends StatefulWidget {
+class WatchlistGrid extends StatefulWidget {
   final List<Map<String, String>> animeList;
+  final bool showOption;
 
-  const AnimeGridWidget({
+  const WatchlistGrid({
     Key? key,
     required this.animeList,
+    this.showOption = false
   }) : super(key: key);
 
   @override
-  State<AnimeGridWidget> createState() => _AnimeGridWidgetState();
+  State<WatchlistGrid> createState() => _WatchlistGridState();
 }
 
-class _AnimeGridWidgetState extends State<AnimeGridWidget> {
+class _WatchlistGridState extends State<WatchlistGrid> {
   final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
   Future<bool> isAnimeWatched(String animeId) async {
@@ -31,6 +33,58 @@ class _AnimeGridWidgetState extends State<AnimeGridWidget> {
     } catch (e) {
       print('Error checking watched status: $e');
       return false;
+    }
+  }
+
+  Future<void> _removeAnimeFromWatchlist(String docId, String watchlistId) async {
+  if (userId == null) return;
+
+  try {
+    print('Removing anime with docId: $docId');
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('watchlist')
+        .doc(watchlistId)
+        .collection('anime')
+        .doc(docId)
+        .delete();
+
+    print('Anime removed from watchlist successfully!');
+  } catch (e) {
+    print('Error removing anime: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to remove anime from watchlist')),
+    );
+  }
+}
+
+
+  Future<void> _confirmRemoveAnime(String docId, String watchlistId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove from Watchlist'),
+        content: Text('Are you sure you want to remove this anime from your watchlist?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Yes'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      _removeAnimeFromWatchlist(docId, watchlistId);
+      setState(() {
+        widget.animeList.removeWhere((anime) => anime['docId'] == docId);
+      });
     }
   }
 
@@ -82,8 +136,8 @@ class _AnimeGridWidgetState extends State<AnimeGridWidget> {
                               child: CircularProgressIndicator(
                                 value: loadingProgress.expectedTotalBytes !=
                                         null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        (loadingProgress.expectedTotalBytes ?? 1)
+                                    ? loadingProgress.cumulativeBytesLoaded / 
+                                      (loadingProgress.expectedTotalBytes ?? 1)
                                     : null,
                                 color: Colors.redAccent,
                               ),
@@ -97,6 +151,24 @@ class _AnimeGridWidgetState extends State<AnimeGridWidget> {
                         ),
                       ),
                     ),
+                    !widget.showOption ? Positioned(
+                      top: 5,
+                      right: 5,
+                      child: GestureDetector(
+                        onTap: () {
+                          _confirmRemoveAnime(anime['docId']!, anime['watchlistId']!);
+                        },
+                        child: CircleAvatar(
+                          radius: 14,
+                          backgroundColor: const Color.fromARGB(174, 85, 85, 85),
+                          child: Icon(
+                            Icons.close,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ): Container(),
                     Positioned(
                       bottom: 0,
                       left: 0,
@@ -104,7 +176,7 @@ class _AnimeGridWidgetState extends State<AnimeGridWidget> {
                         future: isAnimeWatched(anime['id'] ?? ''),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const SizedBox(); // No overlay while loading
+                            return const SizedBox(); 
                           }
 
                           final isWatched = snapshot.data ?? false;

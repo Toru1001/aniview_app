@@ -16,16 +16,42 @@ class ReplyReview extends StatefulWidget {
 
 class _ReplyReviewState extends State<ReplyReview> {
   final TextEditingController _replyController = TextEditingController();
-  String userImageUrl = ''; 
+  String userImageUrl = '';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String reviewCreatorId = '';
 
-  
   @override
   void initState() {
     super.initState();
     _fetchUserImage();
+    _fetchReviewCreatorId();
   }
 
-  
+  Future<void> sendNotification({
+    required String senderId,
+    required String receiverId,
+    required String senderName,
+    required String message,
+    required String type,
+    required String senderImg,
+  }) async {
+    await _firestore
+        .collection('users')
+        .doc(receiverId)
+        .collection('notifications')
+        .add({
+      'date': FieldValue.serverTimestamp(),
+      'type': type,
+      'senderId': senderId,
+      'receiverId': receiverId,
+      'senderName': senderName,
+      'isOpened': false,
+      'message': message,
+      'senderImg': senderImg,
+      'reviewId': widget.reviewID
+    });
+  }
+
   Future<void> _fetchUserImage() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     
@@ -39,12 +65,30 @@ class _ReplyReviewState extends State<ReplyReview> {
         if (userDoc.exists) {
           Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
           setState(() {
-            userImageUrl = userData['imageUrl'] ?? ''; 
+            userImageUrl = userData['imageUrl'] ?? '';
           });
         }
       } catch (e) {
         print('Error fetching user data: $e');
       }
+    }
+  }
+
+  Future<void> _fetchReviewCreatorId() async {
+    try {
+      DocumentSnapshot reviewDoc = await _firestore
+          .collection('reviews')
+          .doc(widget.reviewID)
+          .get();
+
+      if (reviewDoc.exists) {
+        Map<String, dynamic> reviewData = reviewDoc.data() as Map<String, dynamic>;
+        setState(() {
+          reviewCreatorId = reviewData['userId'];  // Get the userId of the review creator
+        });
+      }
+    } catch (e) {
+      print('Error fetching review creator data: $e');
     }
   }
 
@@ -63,19 +107,30 @@ class _ReplyReviewState extends State<ReplyReview> {
 
           await FirebaseFirestore.instance
               .collection('reviews')
-              .doc(widget.reviewID) // Use the review ID to get the correct review
-              .collection('replies') // Replies subcollection
+              .doc(widget.reviewID)
+              .collection('replies')
               .add({
             'replyText': _replyController.text,
             'userId': currentUser.uid,
-            'userFirstName': userData['firstName'] ?? 'Anonymous', // Get first name
-            'userLastName': userData['lastName'] ?? '', // Get last name
-            'userImageUrl': userData['imageUrl'] ?? '', // Get profile image URL
-            'date': Timestamp.now(), // Save current timestamp
-            'isReply' : true,
+            'userFirstName': userData['firstName'] ?? 'Anonymous',
+            'userLastName': userData['lastName'] ?? '',
+            'userImageUrl': userData['imageUrl'] ?? '',
+            'date': Timestamp.now(),
+            'isReply': true,
           });
 
-          _replyController.clear(); // Clear the text field after saving the reply
+          if (currentUser.uid != reviewCreatorId) {
+            await sendNotification(
+              senderId: currentUser.uid,
+              receiverId: reviewCreatorId,
+              senderName: '${userData['firstName']} ${userData['lastName']}',
+              message: 'replied to your review',
+              type: 'reply',
+              senderImg: userData['imageUrl'] ?? '',
+            );
+          }
+
+          _replyController.clear();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Reply added successfully!')),
           );
@@ -109,11 +164,9 @@ class _ReplyReviewState extends State<ReplyReview> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User image or a default icon if the imageUrl is not available
           userImageUrl.isNotEmpty
               ? CircleAvatar(
                   radius: 25,
-                  
                   backgroundImage: NetworkImage(userImageUrl),
                 )
               : const CircleAvatar(

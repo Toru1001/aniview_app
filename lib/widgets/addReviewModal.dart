@@ -42,12 +42,11 @@ class _AddReviewModalState extends State<AddReviewModal> {
           'rating': _rating,
           'review': _reviewController.text,
           'title': widget.title,
-          'userId': currentUser.uid, // Store the userId
+          'userId': currentUser.uid, 
         });
 
         print("Review saved successfully!");
 
-        // Show a snackbar to inform the user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -59,11 +58,10 @@ class _AddReviewModalState extends State<AddReviewModal> {
           ),
         );
 
-        Navigator.pop(context); // Close the modal
+        Navigator.pop(context); 
       }
     } catch (e) {
       print("Error saving review: $e");
-      // Show an error snackbar if something goes wrong
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -88,7 +86,6 @@ class _AddReviewModalState extends State<AddReviewModal> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header Section
               Padding(
                 padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
                 child: Row(
@@ -121,7 +118,7 @@ class _AddReviewModalState extends State<AddReviewModal> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        _saveReview(); // Call the save function
+                        _saveReview(); 
                       },
                       child: const Text(
                         'Save',
@@ -153,27 +150,30 @@ class _AddReviewModalState extends State<AddReviewModal> {
                         SizedBox(
                           width: 20,
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 25,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.title,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
+                                ),
+                                softWrap: true,
                               ),
-                            ),
-                            Text(
-                              widget.genre,
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 16,
-                              ),
-                            )
-                          ],
+                              Text(
+                                widget.genre,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                ),
+                              )
+                            ],
+                          ),
                         )
                       ],
                     )),

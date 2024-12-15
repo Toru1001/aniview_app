@@ -37,6 +37,7 @@ class _HomeState extends State<Home> {
   Timer? _timer;
   String _activeTab = "Anime";
   Widget _currentPage = Container();
+  bool isLoadingAnime = true;
 
   @override
   void initState() {
@@ -48,6 +49,34 @@ class _HomeState extends State<Home> {
     _startAutoRefresh();
     _currentPage = _animePage();
   }
+
+  Future<void> refreshPage() async {
+    setState(() {
+      isLoadingAnime = true;
+      animeData = [];
+    });
+
+    try {
+    _startRequestThrottling();
+    fetchAnimeData(6);
+    fetchTopAnimeData("", "", 7);
+    fetchTopAiringAnimeData("airing", "", 7);
+    _startAutoRefresh();
+    _currentPage = _animePage();
+      setState(() {
+        hasError = false;
+      });
+    } catch (e) {
+      setState(() {
+        hasError = true;
+      });
+    } finally {
+      setState(() {
+        isLoadingAnime = false;
+      });
+    }
+  }
+
 
   @override
   void dispose() {
@@ -64,7 +93,7 @@ class _HomeState extends State<Home> {
   void _startAutoRefresh() {
     int elapsedSeconds = 0;
     _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (elapsedSeconds == 3) {
+      if (elapsedSeconds == 5) {
         timer.cancel();
       } else {
         _executeRequests(elapsedSeconds);
@@ -99,20 +128,26 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF201F31),
-      height: double.infinity,
-      width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-        child: Column(
-          children: [
-            _tabButtons(),
-            const SizedBox(height: 20),
-            Expanded(
-              child: _currentPage,
+    return Scaffold(
+      backgroundColor: const Color(0xFF201F31),
+      body: RefreshIndicator(
+        onRefresh: refreshPage,
+        child: Container(
+          color: const Color(0xFF201F31),
+          height: double.infinity,
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+            child: Column(
+              children: [
+                _tabButtons(),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: _currentPage,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -528,7 +563,7 @@ class _HomeState extends State<Home> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Anime Reviews",
+            "Anime Feed",
             style: TextStyle(
               fontSize: 24,
               color: Colors.redAccent,

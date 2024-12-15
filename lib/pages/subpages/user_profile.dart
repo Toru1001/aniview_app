@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class UserProfilePage extends StatefulWidget {
-  final String userId; 
+  final String userId;
 
   const UserProfilePage({required this.userId});
 
@@ -30,17 +30,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
   String currentUserId = '';
   int friendsCount = 0;
   int reviewsCount = 0;
+  int watchedCount = 0;
 
   @override
   void initState() {
     super.initState();
     refreshPage();
     _countFriends();
-     _countReviews();
+    _countReviews();
+    _countWatchedAnime();
     currentUserId = _auth.currentUser!.uid;
   }
-
-
 
   Future<void> unfriend(String currentUserId, String friendId) async {
     try {
@@ -88,7 +88,29 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-   Future<void> _countFriends() async {
+  Future<void> _countWatchedAnime() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("No user logged in");
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(widget.userId)
+          .collection('watched')
+          .get();
+
+      setState(() {
+        watchedCount = snapshot.size;
+      });
+    } catch (e) {
+      debugPrint("Error fetching watched anime count: $e");
+      setState(() {
+        watchedCount = 0;
+      });
+    }
+  }
+
+  Future<void> _countFriends() async {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception("No user logged in");
@@ -115,7 +137,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
       isLoadingUser = true;
       isLoadingAnime = true;
       _countFriends();
-       _countReviews();
+      _countReviews();
+      _countWatchedAnime();
       animeData = [];
     });
 
@@ -138,20 +161,59 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-  
+  Future<void> sendNotification({
+    required String senderId,
+    required String receiverId,
+    required String senderName,
+    required String message,
+    required String type,
+    required String senderImg,
+  }) async {
+    print(senderId + " " + receiverId + " " + senderName + " " + " " + message + " " + type + " " + senderImg);
+    await _firestore
+        .collection('users')
+        .doc(receiverId)
+        .collection('notifications')
+        .add({
+      'date': FieldValue.serverTimestamp(),
+      'type': type,
+      'senderId': senderId,
+      'receiverId': receiverId,
+      'senderName': senderName,
+      'isOpened': false,
+      'message': message,
+      'senderImg': senderImg,
+    });
+  }
 
   Future<void> sendFriendRequest(String senderId, String receiverId) async {
     await _firestore
         .collection('users')
-        .doc(senderId)
-        .collection('friendRequests')
         .doc(receiverId)
+        .collection('friendRequests')
+        .doc(senderId)
         .set({
       'senderId': senderId,
       'receiverId': receiverId,
       'status': 'pending',
       'timestamp': FieldValue.serverTimestamp(),
     });
+
+    final senderDoc = await _firestore.collection('users').doc(senderId).get();
+    final senderData = senderDoc.data();
+    final senderName =
+        "${senderData?['firstName'] ?? 'Unknown'} ${senderData?['lastName'] ?? ''}"
+            .trim();
+    final senderImg = senderData?['imageUrl'] ?? '';
+
+    await sendNotification(
+      senderId: senderId,
+      receiverId: receiverId,
+      senderName: senderName,
+      message: "has sent you a friend request.",
+      type: "friend request",
+      senderImg: senderImg,
+    );
   }
 
   Future<void> acceptFriendRequest(String senderId, String receiverId) async {
@@ -174,6 +236,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
       'isFriend': true,
       'timestamp': FieldValue.serverTimestamp(),
     });
+    
+    final senderDoc = await _firestore.collection('users').doc(receiverId).get();
+    final senderData = senderDoc.data();
+    final senderName =
+        "${senderData?['firstName'] ?? 'Unknown'} ${senderData?['lastName'] ?? ''}"
+            .trim();
+    final senderImg = senderData?['imageUrl'] ?? '';
+
+    await sendNotification(
+      senderId: receiverId,
+      receiverId: senderId,
+      senderName: senderName,
+      message: "has accepted your friend request.",
+      type: "friend request",
+      senderImg: senderImg,
+    );
 
     await _firestore
         .collection('users')
@@ -185,6 +263,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       'isFriend': true,
       'timestamp': FieldValue.serverTimestamp(),
     });
+
   }
 
   Future<void> cancelFriendRequest(String senderId, String receiverId) async {
@@ -444,7 +523,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.redAccent,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 30, vertical: 10),
                       shape: RoundedRectangleBorder(
@@ -551,34 +630,34 @@ class _UserProfilePageState extends State<UserProfilePage> {
               );
             } else if (status == 'Friends') {
               return ElevatedButton(
-                onPressed: () async{
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Unfriend'),
-                          content: const Text(
-                              'Are you sure you want to unfriend this user?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Unfriend'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('Unfriend'),
+                        content: const Text(
+                            'Are you sure you want to unfriend this user?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Unfriend'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
 
-                    if (confirm == true) {
-                      await unfriend(currentUserId, widget.userId);
-                      setState(() {
-                        status = 'Add Friend';
-                      });
-                    }
+                  if (confirm == true) {
+                    await unfriend(currentUserId, widget.userId);
+                    setState(() {
+                      status = 'Add Friend';
+                    });
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -596,7 +675,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             } else {
               return ElevatedButton(
                 onPressed: () async {
-                  await sendFriendRequest(widget.userId, currentUserId);
+                  await sendFriendRequest(currentUserId, widget.userId);
                   setState(() {
                     status = 'Pending';
                   });
@@ -629,7 +708,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   fontSize: 30,
                   fontWeight: FontWeight.w200),
             ),
-            _buildStatItem("Watched", userData['watchedCount'] ?? "0"),
+            GestureDetector(
+                onTap: () {},
+                child:
+                    _buildStatItem("Watched", watchedCount.toString() ?? "0")),
             const Text(
               "|",
               style: TextStyle(
@@ -655,7 +737,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           .get();
 
       setState(() {
-        reviewsCount = snapshot.size; 
+        reviewsCount = snapshot.size;
       });
     } catch (e) {
       debugPrint("Error fetching reviews count: $e");

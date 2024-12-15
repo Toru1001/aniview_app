@@ -1,4 +1,5 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
+import 'package:aniview_app/accountPages/login_page.dart';
 import 'package:aniview_app/accountPages/signupPage.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
 import 'package:aniview_app/pages/flashScreen.dart';
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: loginPage(),
+      home: LogInPage(),
     );
   }
 }

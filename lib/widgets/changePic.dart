@@ -69,9 +69,8 @@ class _ChangePicState extends State<ChangePic> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Horizontal ListView
                 SizedBox(
-                  height: 100, // Fixed height for the horizontal list
+                  height: 100,
                   child: ListView.builder(
                     shrinkWrap: true,
                     scrollDirection: Axis.horizontal,

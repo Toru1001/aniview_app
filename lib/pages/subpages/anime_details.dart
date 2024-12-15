@@ -232,49 +232,56 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-            
+
                 if (snapshot.hasError) {
                   return const Center(child: Text('Error loading reviews'));
                 }
-            
+
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No reviews yet', style: TextStyle(color: Colors.grey, fontSize: 20),),);
+                  return const Center(
+                    child: Text(
+                      'No reviews yet',
+                      style: TextStyle(color: Colors.grey, fontSize: 20),
+                    ),
+                  );
                 }
-            
+
                 List<Widget> reviewWidgets = [];
                 for (var reviewDoc in snapshot.data!.docs) {
                   var reviewData = reviewDoc.data() as Map<String, dynamic>;
                   String userId = reviewData['userId'];
-                  String reviewId = reviewDoc.id; 
-            
+                  String reviewId = reviewDoc.id;
+
                   Timestamp timestamp = reviewData['date'];
                   DateTime dateTime = timestamp.toDate();
                   String formattedDate =
                       DateFormat('MM/dd/yyyy hh:mm a').format(dateTime);
-            
+
                   reviewWidgets.add(FutureBuilder<DocumentSnapshot>(
                     future: FirebaseFirestore.instance
                         .collection('users')
                         .doc(userId)
                         .get(),
                     builder: (context, userSnapshot) {
-                      if (userSnapshot.connectionState == ConnectionState.waiting) {
+                      if (userSnapshot.connectionState ==
+                          ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-            
+
                       if (userSnapshot.hasError) {
-                        return const Center(child: Text('Error loading user data'));
+                        return const Center(
+                            child: Text('Error loading user data'));
                       }
-            
+
                       if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
                         return const Center(child: Text('User not found'));
                       }
-            
+
                       var userData = userSnapshot.data!;
                       String userFirstName = userData['firstName'];
                       String userLastName = userData['lastName'];
                       String userImageUrl = userData['imageUrl'] ?? '';
-            
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -282,14 +289,13 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                             animeId: reviewData['animeId'],
                             review: reviewData['review'],
                             title: reviewData['title'],
-                            dateTime: formattedDate, 
+                            dateTime: formattedDate,
                             rating: reviewData['rating'],
                             userFirstName: userFirstName,
                             userLastName: userLastName,
                             userImageUrl: userImageUrl,
                             reviewId: reviewId,
                           ),
-            
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('reviews')
@@ -305,17 +311,17 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                                 return const Center(
                                     child: CircularProgressIndicator());
                               }
-            
+
                               if (replySnapshot.hasError) {
                                 return const Center(
                                     child: Text('Error loading reply'));
                               }
-            
+
                               if (!replySnapshot.hasData ||
                                   replySnapshot.data!.docs.isEmpty) {
                                 return const SizedBox.shrink();
                               }
-            
+
                               var replyDoc = replySnapshot.data!.docs.first;
                               var replyData =
                                   replyDoc.data() as Map<String, dynamic>;
@@ -326,13 +332,13 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                                   replyData['userLastName'] ?? 'User';
                               String replyImageUrl =
                                   replyData['userImageUrl'] ?? '';
-            
+
                               Timestamp replyTimestamp = replyData['date'];
                               DateTime replyDateTime = replyTimestamp.toDate();
                               String formattedReplyDate =
                                   DateFormat('MM/dd/yyyy hh:mm a')
                                       .format(replyDateTime);
-            
+
                               return ReplyWidget(
                                 replyText: replyText,
                                 userFirstName: replyFirstName,
@@ -347,7 +353,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                     },
                   ));
                 }
-            
+
                 return Column(children: reviewWidgets);
               },
             ),
@@ -524,92 +530,42 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
   Column _cards(Map<String, String> anime) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 300,
-                  child: Text(
-                    anime['title'] ?? '',
-                    style: const TextStyle(
+        Container(
+          width: double.infinity,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      anime['title'] ?? '',
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
-                        color: Colors.white),
-                    softWrap: true,
-                    overflow: TextOverflow.visible,
-                  ),
+                        color: Colors.white,
+                      ),
+                      softWrap: true,
+                    ),
+                    Text(
+                      anime['genres'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 15,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  anime['genres'] ?? '',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 15,
-                      color: Colors.grey),
-                )
-              ],
-            ),
-            Container(
-              child: Row(
+              ),
+              Row(
                 children: [
-                  isTop3
-                      ? GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text('Remove from Top 3'),
-                                  content: const Text(
-                                      'Are you sure you want to remove this anime from your Top 3?'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        Navigator.of(context).pop();
-                                        await removeFromTop3(anime['id'] ?? '');
-                                        refreshPage();
-                                      },
-                                      child: const Text('Remove'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          child: Transform.rotate(
-                            angle: -90 * (3.14 / 180),
-                            child: Icon(
-                              Icons.double_arrow_sharp,
-                              color: Colors.redAccent,
-                              size: 35,
-                            ),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            addFavoriteAnime(anime['id'] ?? '');
-                            refreshPage();
-                          },
-                          child: Transform.rotate(
-                            angle: -90 * (3.14 / 180),
-                            child: Icon(
-                              Icons.double_arrow_sharp,
-                              color: Colors.grey,
-                              size: 35,
-                            ),
-                          ),
-                        ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      showModalDialog(anime);
+                    },
                     child: const Icon(
                       Icons.bookmark_add_outlined,
                       color: Colors.redAccent,
@@ -617,9 +573,9 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                     ),
                   ),
                 ],
-              ),
-            )
-          ],
+              )
+            ],
+          ),
         ),
         const SizedBox(
           height: 20,
@@ -631,7 +587,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
             children: [
               Column(
                 children: [
-                  Text(
+                  const Text(
                     'Rating',
                     style: TextStyle(
                         color: Colors.redAccent,
@@ -640,7 +596,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                   ),
                   Text(
                     animeRating.toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.w400,
                         fontSize: 15),
@@ -777,16 +733,6 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
     );
   }
 
-  Widget verticalDivider() {
-    return const VerticalDivider(
-      width: 20,
-      thickness: 1,
-      color: Colors.redAccent,
-      indent: 10,
-      endIndent: 10,
-    );
-  }
-
   Future<void> fetchAnimeData(final String animeId) async {
     try {
       AnimeDetailsModel anime = await fetchAnimeDetails(widget.animeId);
@@ -857,7 +803,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                 "Anime already exists in your Top 3 list!",
                 style: TextStyle(color: Colors.white),
               ),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: Colors.grey,
             ),
           );
           return;
@@ -870,7 +816,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
                 "Top 3 Limit Reached! You can't add more anime.",
                 style: TextStyle(color: Colors.white),
               ),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: Colors.grey,
             ),
           );
           return;
@@ -885,7 +831,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
               "Anime added successfully.",
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.greenAccent,
+            backgroundColor: Colors.redAccent,
           ),
         );
       } else {
@@ -899,7 +845,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
               "Anime added successfully.",
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.greenAccent,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -907,7 +853,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Colors.grey,
         ),
       );
     }
@@ -934,7 +880,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
               "Anime removed from Top 3.",
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.greenAccent,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -942,7 +888,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Colors.grey,
         ),
       );
     }
@@ -971,5 +917,349 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
     setState(() {
       hasError = state;
     });
+  }
+
+  void showModalDialog(Map<String, String> anime) async {
+    final String userId = FirebaseAuth.instance.currentUser!.uid;
+    final String animeId = anime['id'] ?? '';
+    final String animeImg = anime['alternative'] ?? '';
+    final String animeTitle = anime['title'] ?? '';
+    bool isWatched = await checkIfAnimeIsWatched(userId, animeId);
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(userId);
+    final watchlistsSnapshot = await userDoc.collection('watchlist').get();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          insetPadding: const EdgeInsets.all(20),
+          backgroundColor: const Color(0xFF201F31),
+          child: Container(
+            height: 500,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      'Add to',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        children: [
+                          isTop3
+                              ? GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title:
+                                              const Text('Remove from Top 3'),
+                                          content: const Text(
+                                              'Are you sure you want to remove this anime from your Top 3?'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () async {
+                                                Navigator.of(context).pop();
+                                                await removeFromTop3(
+                                                    anime['id'] ?? '');
+                                                refreshPage();
+                                              },
+                                              child: const Text('Remove'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Transform.rotate(
+                                    angle: -90 * (3.14 / 180),
+                                    child: const Icon(
+                                      Icons.double_arrow_sharp,
+                                      color: Colors.redAccent,
+                                      size: 60,
+                                    ),
+                                  ),
+                                )
+                              : GestureDetector(
+                                  onTap: () {
+                                    addFavoriteAnime(anime['id'] ?? '');
+                                    Navigator.of(context).pop();
+                                    refreshPage();
+                                  },
+                                  child: Transform.rotate(
+                                    angle: -90 * (3.14 / 180),
+                                    child: const Icon(
+                                      Icons.double_arrow_sharp,
+                                      color: Colors.grey,
+                                      size: 60,
+                                    ),
+                                  ),
+                                ),
+                          const Text(
+                            'Top 3',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              if (isWatched) {
+                                bool shouldRemove = await showConfirmDialog(
+                                    'Remove Watched',
+                                    'Are you sure you want to remove this anime from your Watched list?');
+                                if (shouldRemove) {
+                                  await removeAnimeFromWatched(userId, animeId);
+                                  isWatched = false;
+                                  refreshPage();
+                                }
+                              } else {
+                                await addAnimeToWatched(
+                                    userId, animeId, animeImg, animeTitle);
+                                isWatched = true;
+                                refreshPage();
+                              }
+                              Navigator.of(context).pop();
+                            },
+                            child: Icon(
+                              Icons.remove_red_eye_outlined,
+                              color: isWatched ? Colors.redAccent : Colors.grey,
+                              size: 60,
+                            ),
+                          ),
+                          const Text(
+                            'Watched',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            ),
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Watchlist',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const Divider(
+                    thickness: .5,
+                    color: Colors.grey,
+                    height: 10,
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: watchlistsSnapshot.docs.length,
+                      itemBuilder: (context, index) {
+                        final watchlist = watchlistsSnapshot.docs[index];
+                        final watchlistName = watchlist['name'];
+
+                        return ListTile(
+                          leading: Icon(
+                            Icons.video_library_outlined,
+                            size: 35,
+                            color: Colors.redAccent,
+                          ),
+                          title: Text(
+                            watchlistName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w300),
+                          ),
+                          onTap: () async {
+                            final animeInWatchlist = await FirebaseFirestore
+                                .instance
+                                .collection('users')
+                                .doc(userId)
+                                .collection('watchlist')
+                                .doc(watchlist.id)
+                                .collection('anime')
+                                .where('animeId', isEqualTo: animeId)
+                                .get();
+
+                            if (animeInWatchlist.docs.isEmpty) {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(userId)
+                                  .collection('watchlist')
+                                  .doc(watchlist.id)
+                                  .collection('anime')
+                                  .add({
+                                'animeId': animeId,
+                                'animeImage': anime['alternative'] ?? '',
+                                'animeTitle': anime['title'] ?? '',
+                                'addedAt': Timestamp.now(),
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('Anime added to $watchlistName'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+
+                              Navigator.of(context).pop();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Anime is already in $watchlistName',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.grey,
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
+                      separatorBuilder: (context, index) {
+                        return const Divider(
+                          thickness: 0.5,
+                          color: Colors.grey,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> addAnimeToWatched(
+      String userId, String animeId, String animeImg, String animeTitle) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('watched')
+          .doc(animeId)
+          .set({
+        'addedAt': FieldValue.serverTimestamp(),
+        'animeTitle': animeTitle,
+        'animeImg': animeImg,
+        'animeId': animeId
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text(
+              'Anime added to Watched!',
+              style: TextStyle(color: Colors.white),
+            )),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            backgroundColor: Colors.grey,
+            content: Text(
+              'Failed to add to Watched: $e',
+              style: TextStyle(color: Colors.white),
+            )),
+      );
+    }
+  }
+
+  Future<void> removeAnimeFromWatched(String userId, String animeId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('watched')
+          .doc(animeId)
+          .delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text(
+              'Anime removed from Watched!',
+              style: TextStyle(color: Colors.white),
+            )),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            backgroundColor: Colors.grey,
+            content: Text(
+              'Failed to remove from Watched: $e',
+              style: TextStyle(color: Colors.white),
+            )),
+      );
+    }
+  }
+
+  Future<bool> checkIfAnimeIsWatched(String userId, String animeId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('watched')
+          .doc(animeId)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> showConfirmDialog(String title, String content) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Confirm'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

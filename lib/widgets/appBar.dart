@@ -1,5 +1,6 @@
 
 import 'package:aniview_app/accountPages/loginPage.dart';
+import 'package:aniview_app/pages/subpages/notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -23,7 +24,12 @@ class AniviewAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         GestureDetector(
           onTap: () {
-            signOut(context);
+            Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Notifications()
+                  ),
+                );
           },
           child: Container(
             margin: const EdgeInsets.all(10),
@@ -44,16 +50,4 @@ class AniviewAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  void signOut(BuildContext context) {
-    FirebaseAuth.instance.signOut();
-    Fluttertoast.showToast(
-      msg: "Account Logged out Successfully",
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.SNACKBAR,
-    );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const loginPage()),
-    );
-  }
 }

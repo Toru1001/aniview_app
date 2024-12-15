@@ -46,7 +46,6 @@ class ReplyWidget extends StatelessWidget {
                       color: Colors.grey,
                     ),
               const SizedBox(width: 10),
-              // Display user's full name
               Text(
                 userFullName,
                 style: const TextStyle(
@@ -58,7 +57,6 @@ class ReplyWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // Display reply text
           Text(
             replyText,
             style: const TextStyle(

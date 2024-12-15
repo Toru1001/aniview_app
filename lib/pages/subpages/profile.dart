@@ -28,6 +28,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? cachedUserData;
   int friendsCount = 0;
   int reviewsCount = 0;
+  int watchedCount = 0;
 
   @override
   void initState() {
@@ -35,6 +36,29 @@ class _ProfilePageState extends State<ProfilePage> {
     refreshPage();
     _countFriends();
     _countReviews();
+    _countWatchedAnime();
+  }
+
+  Future<void> _countWatchedAnime() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("No user logged in");
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('watched')
+          .get();
+
+      setState(() {
+        watchedCount = snapshot.size;
+      });
+    } catch (e) {
+      debugPrint("Error fetching watched anime count: $e");
+      setState(() {
+        watchedCount = 0;
+      });
+    }
   }
 
   Future<void> refreshPage() async {
@@ -49,6 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
       cachedUserData = null;
       await _getUserData();
       await _countFriends();
+      _countWatchedAnime();
       _countReviews();
       setState(() {
         hasError = false;
@@ -336,7 +361,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 30,
                   fontWeight: FontWeight.w200),
             ),
-            _buildStatItem("Watched", userData['watchedCount'] ?? "0"),
+            _buildStatItem("Watched", watchedCount.toString() ?? "0"),
             const Text(
               "|",
               style: TextStyle(

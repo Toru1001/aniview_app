@@ -84,7 +84,7 @@ class _ViewReviewsModalState extends State<ViewReviewsModal> {
                   StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('reviews')
-                        .doc(widget.reviewId) // Get a specific review by its ID
+                        .doc(widget.reviewId) 
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {

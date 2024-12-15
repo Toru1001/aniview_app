@@ -1,5 +1,7 @@
 import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:aniview_app/pages/subpages/home.dart';
+import 'package:aniview_app/pages/subpages/my_watchlist.dart';
+import 'package:aniview_app/pages/subpages/notifications.dart';
 import 'package:aniview_app/pages/subpages/profile.dart';
 import 'package:aniview_app/pages/subpages/search.dart';
 import 'package:aniview_app/widgets/appBar.dart';
@@ -9,7 +11,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
-  
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -17,10 +18,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
+
   final List<Widget> _pages = [
     const Home(),
     const SearchPage(),
-    const Center(child: Text('My Watchlist Page', style: TextStyle(color: Colors.white))),
+    const MyWatchlist(),
     const ProfilePage(),
   ];
 
@@ -35,12 +37,9 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFF201F31),
       appBar: const AniviewAppBar(),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (child, animation) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        child: _pages[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
