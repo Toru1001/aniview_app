@@ -23,8 +23,6 @@ class _ViewReviewsModalState extends State<ViewReviewsModal> {
   @override
   void initState() {
     super.initState();
-
-    // Set the default visibility for the replies to true (expanded by default)
     replyVisibility[widget.reviewId] = true;
   }
 
@@ -188,7 +186,6 @@ class _ViewReviewsModalState extends State<ViewReviewsModal> {
                                       ),
                                     );
                                   }
-
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [

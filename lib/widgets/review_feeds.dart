@@ -1,3 +1,6 @@
+import 'package:aniview_app/pages/MyHomePage.dart';
+import 'package:aniview_app/pages/subpages/anime_details.dart';
+import 'package:aniview_app/pages/subpages/user_profile.dart';
 import 'package:aniview_app/widgets/viewReview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +14,8 @@ class ReviewCard extends StatefulWidget {
   final String date;
   final String imageUrl;
   final String reviewId;
-  final String currentUserId; 
+  final String currentUserId;
+  final String animeId;
 
   const ReviewCard({
     required this.userid,
@@ -22,6 +26,7 @@ class ReviewCard extends StatefulWidget {
     required this.imageUrl,
     required this.reviewId,
     required this.currentUserId,
+    required this.animeId,
     Key? key,
   }) : super(key: key);
 
@@ -82,8 +87,10 @@ class _ReviewCardState extends State<ReviewCard> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Color(0xFF201F31),
-        title: const Text('Delete Review', style: TextStyle(color: Colors.white)),
-        content: const Text('Are you sure you want to delete this review?', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Delete Review', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to delete this review?',
+            style: TextStyle(color: Colors.white)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -94,7 +101,8 @@ class _ReviewCardState extends State<ReviewCard> {
               deleteReview();
               Navigator.of(context).pop();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+            child:
+                const Text('Delete', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -147,12 +155,33 @@ class _ReviewCardState extends State<ReviewCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          firstName + ' ' + lastName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                        GestureDetector(
+                          onTap: () {
+                            if (widget.currentUserId == widget.userid) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => MyHomePage(
+                                          currentIndex: 3,
+                                        )),
+                              );
+                            } else{
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => UserProfilePage(
+                                          userId: widget.userid,
+                                        )),
+                              );
+                            };
+                          },
+                          child: Text(
+                            firstName + ' ' + lastName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                         Text(
@@ -191,13 +220,24 @@ class _ReviewCardState extends State<ReviewCard> {
                 ),
               ),
               const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  widget.imageUrl,
-                  height: 300,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AnimeDetailsPage(
+                              animeId: widget.animeId,
+                            )),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    widget.imageUrl,
+                    height: 300,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -240,10 +280,11 @@ class _ReviewCardState extends State<ReviewCard> {
                   ),
                   if (widget.userid == widget.currentUserId)
                     GestureDetector(
-                      onTap: showDeleteConfirmationDialog,
-                      child: Icon(Icons.delete_outline_rounded, color: Colors.red,)
-                      
-                    ),
+                        onTap: showDeleteConfirmationDialog,
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          color: Colors.red,
+                        )),
                 ],
               ),
             ],

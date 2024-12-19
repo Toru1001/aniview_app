@@ -158,7 +158,6 @@ class _OnBoardingState extends State<OnBoarding> {
               ),
             ),
 
-          // Done Button (on the last page at the bottom)
           if (onLastPage)
             Positioned(
               bottom: 30,
@@ -167,7 +166,7 @@ class _OnBoardingState extends State<OnBoarding> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return const MyHomePage();
+                    return MyHomePage();
                   }));
                 },
                 style: ElevatedButton.styleFrom(

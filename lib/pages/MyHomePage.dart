@@ -10,14 +10,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  int currentIndex;
+    MyHomePage({
+    Key? key,
+    this.currentIndex = 0
+  }) : super(key: key);
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> with RouteAware {
-  int _currentIndex = 0;
   bool _hasUnreadNotifications = false;
 
   final List<Widget> _pages = [
@@ -35,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> with RouteAware {
 
   void _onItemTapped(int index) {
     setState(() {
-      _currentIndex = index;
+      widget.currentIndex = index;
     });
   }
 
@@ -51,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> with RouteAware {
       backgroundColor: const Color(0xFF201F31),
       appBar: appBar(),
       body: IndexedStack(
-        index: _currentIndex,
+        index: widget.currentIndex,
         children: _pages,
       ),
       bottomNavigationBar: ClipRRect(
@@ -76,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> with RouteAware {
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {
-    final bool isSelected = _currentIndex == index;
+    final bool isSelected = widget.currentIndex == index;
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: AnimatedContainer(

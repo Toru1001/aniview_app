@@ -227,7 +227,7 @@ class _LogInPageState extends State<LogInPage> {
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const MyHomePage()),
+              MaterialPageRoute(builder: (context) => MyHomePage()),
             );
           }
         } else {

@@ -16,6 +16,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:aniview_app/api/get_topAnime_api.dart';
 
 class Home extends StatefulWidget {
+  
   const Home({super.key});
 
   @override
@@ -641,6 +642,7 @@ class _HomeState extends State<Home> {
                             date: formattedDate,
                             imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
                             currentUserId: userId!.toString(),
+                            animeId: data['animeId'] ?? '',
                           );
                         }).toList(),
                       );

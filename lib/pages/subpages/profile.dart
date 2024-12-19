@@ -546,6 +546,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   date: formattedDate,
                   imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
                   currentUserId: userId!.toString(),
+                  animeId: data['animeId'] ?? '',
                 );
               }).toList(),
             );

@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Aniview App',
+      theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       home: const Flashscreen(),
