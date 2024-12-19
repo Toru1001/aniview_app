@@ -1,5 +1,5 @@
+import 'package:aniview_app/accountPages/login_page.dart';
 import 'package:aniview_app/pages/MyHomePage.dart';
-import 'package:aniview_app/accountPages/loginPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,7 +18,7 @@ class _FlashscreenState extends State<Flashscreen>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     Future.delayed(const Duration(seconds: 5), () {
-    Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => loginPage()),);
+    Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => LogInPage()),);
     });
   }
 
@@ -36,9 +36,8 @@ class _FlashscreenState extends State<Flashscreen>
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFFFCCF31),
-            // Colors.blue.shade400,
-            Color(0xFFF55555),
+            const Color(0xFF201F31),
+            const Color.fromARGB(255, 21, 21, 33),
           ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
@@ -47,7 +46,7 @@ class _FlashscreenState extends State<Flashscreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('assets/icons/LogoFilled.png',
+          Image.asset('assets/icons/Final_Logo.png',
           width: 250, 
           height: 250,
   ),

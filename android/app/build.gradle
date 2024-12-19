@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services")  // Apply Google Services plugin here
 }
 
 android {
@@ -25,12 +25,12 @@ android {
         targetSdk = 33
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled true
+        multiDexEnabled true  
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.debug  
         }
     }
 }
@@ -40,10 +40,7 @@ flutter {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
-
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0")) 
     implementation("com.google.firebase:firebase-analytics")
-    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.multidex:multidex:2.0.1'  
 }
-
-apply plugin: 'com.google.gms.google-services'  
