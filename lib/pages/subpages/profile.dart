@@ -1,7 +1,7 @@
-
 import 'package:aniview_app/accountPages/login_page.dart';
 import 'package:aniview_app/api/get_animeDetails.dart';
 import 'package:aniview_app/models/anime_details.dart';
+import 'package:aniview_app/pages/subpages/view_friends.dart';
 import 'package:aniview_app/widgets/anime_lists.dart';
 import 'package:aniview_app/widgets/editProfileModal.dart';
 import 'package:aniview_app/widgets/review_feeds.dart';
@@ -102,7 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
           .get();
 
       setState(() {
-        reviewsCount = snapshot.size;  
+        reviewsCount = snapshot.size;
       });
     } catch (e) {
       debugPrint("Error fetching reviews count: $e");
@@ -370,7 +370,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 30,
                   fontWeight: FontWeight.w200),
             ),
-            _buildStatItem("Friends", friendsCount.toString() ?? "0"),
+            GestureDetector(
+              onTap: (){
+                final user = _auth.currentUser!.uid;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ViewFriends(userId: user)
+                  ),
+                );
+              },
+                child:
+                    _buildStatItem("Friends", friendsCount.toString() ?? "0")),
           ],
         ),
       ],
@@ -459,8 +470,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  
-
   Column _myReviews() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     return Column(
@@ -527,7 +536,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 }
 
                 String reviewId = doc.id;
-
+                final userId = FirebaseAuth.instance.currentUser?.uid;
                 return ReviewCard(
                   reviewId: reviewId,
                   userid: data['userId'] ?? 'Unknown User',
@@ -536,6 +545,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   reviewText: data['review'] ?? '',
                   date: formattedDate,
                   imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
+                  currentUserId: userId!.toString(),
                 );
               }).toList(),
             );

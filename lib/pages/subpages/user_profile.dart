@@ -542,19 +542,21 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     onTap: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
+                        
                         builder: (context) {
                           return AlertDialog(
-                            title: const Text('Confirm'),
+                            backgroundColor: const Color(0xFF201F31),
+                            title: const Text('Confirm', style: TextStyle(color: Colors.white)),
                             content: const Text(
-                                'Are you sure you want to delete friend request?'),
+                                'Are you sure you want to delete friend request?', style: TextStyle(color: Colors.white)),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Yes'),
+                                child: const Text('Yes', style: TextStyle(color: Colors.redAccent)),
                               ),
                             ],
                           );
@@ -589,19 +591,21 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
+                    
                     builder: (context) {
                       return AlertDialog(
-                        title: const Text('Confirm'),
+                        backgroundColor: Color(0xFF201F31),
+                        title: const Text('Confirm', style: TextStyle(color: Colors.white)),
                         content: const Text(
-                            'Are you sure you want to cancel the friend request?'),
+                            'Are you sure you want to cancel the friend request?', style: TextStyle(color: Colors.white)),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Yes'),
+                            child: const Text('Yes', style: TextStyle(color: Colors.redAccent)),
                           ),
                         ],
                       );
@@ -635,17 +639,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: const Text('Unfriend'),
+                        backgroundColor: Color(0xFF201F31),
+                        title: const Text('Unfriend', style: TextStyle(color: Colors.white)),
                         content: const Text(
-                            'Are you sure you want to unfriend this user?'),
+                            'Are you sure you want to unfriend this user?', style: TextStyle(color: Colors.white)),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Unfriend'),
+                            child: const Text('Unfriend', style: TextStyle(color: Colors.redAccent)),
                           ),
                         ],
                       );
@@ -814,7 +819,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 }
 
                 String reviewId = doc.id;
-
+                final userId = FirebaseAuth.instance.currentUser?.uid;
                 return ReviewCard(
                   reviewId: reviewId,
                   userid: data['userId'] ?? 'Unknown User',
@@ -823,6 +828,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   reviewText: data['review'] ?? '',
                   date: formattedDate,
                   imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
+                  currentUserId: userId!.toString(),
                 );
               }).toList(),
             );

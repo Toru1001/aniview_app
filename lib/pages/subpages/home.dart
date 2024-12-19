@@ -29,7 +29,6 @@ class _HomeState extends State<Home> {
   List<Map<String, String>> topAnime = [];
   List<Map<String, String>> topAiringAnime = [];
   List<Map<String, String>> topFAVAnime = [];
-  List<Map<String, String>> topOVAAnime = [];
   List<Map<String, String>> topMoviesAnime = [];
   bool isLoading = true;
   bool hasError = false;
@@ -45,7 +44,6 @@ class _HomeState extends State<Home> {
     _startRequestThrottling();
     fetchAnimeData(6);
     fetchTopAnimeData("", "", 7);
-    fetchTopAiringAnimeData("airing", "", 7);
     _startAutoRefresh();
     _currentPage = _animePage();
   }
@@ -60,7 +58,6 @@ class _HomeState extends State<Home> {
     _startRequestThrottling();
     fetchAnimeData(6);
     fetchTopAnimeData("", "", 7);
-    fetchTopAiringAnimeData("airing", "", 7);
     _startAutoRefresh();
     _currentPage = _animePage();
       setState(() {
@@ -93,9 +90,10 @@ class _HomeState extends State<Home> {
   void _startAutoRefresh() {
     int elapsedSeconds = 0;
     _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (elapsedSeconds == 5) {
+      if (elapsedSeconds == 3) {
         timer.cancel();
       } else {
+        _currentPage = _animePage();
         _executeRequests(elapsedSeconds);
         elapsedSeconds++;
       }
@@ -103,15 +101,9 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _executeRequests(int time) async {
-    if (time <= 3) {
-      _currentPage = _animePage();
-    }
     List<Function> requests = [
+      () => fetchTopAiringAnimeData("airing", "", 7),
       () => fetchTopMoviesAnimeData("", "movie", 7),
-      () => fetchTopMoviesAnimeData("", "movie", 7),
-      () => fetchTopOVAAnimeData("", "ova", 7),
-      () => fetchTopOVAAnimeData("", "ova", 7),
-      () => fetchTopFAVAnimeData("favorite", "", 7),
       () => fetchTopFAVAnimeData("favorite", "", 7),
     ];
 
@@ -368,34 +360,6 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void> fetchTopOVAAnimeData(
-      final String filter, final String type, final int limit) async {
-    try {
-      List<Anime> animeList = await fetchTopAnime(filter, type, limit);
-      if (animeList.isNotEmpty) {
-        setState(() {
-          topOVAAnime = animeList
-              .map((anime) =>
-                  {'id': anime.id, 'img': anime.img, 'title': anime.title})
-              .toList();
-          isLoading = false;
-          hasError = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-          hasError = true;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        hasError = true;
-      });
-      print('Error fetching anime data: $e');
-    }
-  }
-
   Future<void> fetchTopFAVAnimeData(
       final String filter, final String type, final int limit) async {
     try {
@@ -546,7 +510,7 @@ class _HomeState extends State<Home> {
               _animeList("Top Anime Series", topAnime, "", ""),
               _animeList("Top Airing", topAiringAnime, "", "airing"),
               _animeList("Movies", topMoviesAnime, "movie", ""),
-              _animeList("OVA", topOVAAnime, "ova", ""),
+              // _animeList("OVA", topOVAAnime, "ova", ""),
               _animeList("Most Favorites", topFAVAnime, "", "favorite"),
             ],
           ),
@@ -667,7 +631,7 @@ class _HomeState extends State<Home> {
                           }
 
                           String reviewId = doc.id;
-
+                          final userId = FirebaseAuth.instance.currentUser?.uid;
                           return ReviewCard(
                             reviewId: reviewId,
                             userid: data['userId'] ?? 'Unknown User',
@@ -676,6 +640,7 @@ class _HomeState extends State<Home> {
                             reviewText: data['review'] ?? '',
                             date: formattedDate,
                             imageUrl: data['imgUrl'] ?? 'https://via.placeholder.com/150',
+                            currentUserId: userId!.toString(),
                           );
                         }).toList(),
                       );

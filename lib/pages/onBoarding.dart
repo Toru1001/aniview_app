@@ -90,7 +90,6 @@ class _OnBoardingState extends State<OnBoarding> {
                     ),
                   ),
 
-                  // Next Button or Save Confirmation on Page 3
                   if (onPage3)
                     GestureDetector(
                       onTap: () async {
@@ -98,21 +97,22 @@ class _OnBoardingState extends State<OnBoarding> {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('Confirm'),
+                              backgroundColor: Color(0xFF201F31),
+                              title: const Text('Confirm', style: TextStyle(color: Colors.white)),
                               content: const Text(
-                                  'Do you want to save this information?'),
+                                  'Do you want to save this information?', style: TextStyle(color: Colors.white)),
                               actions: [
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pop(context, false);
                                   },
-                                  child: const Text('Cancel'),
+                                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                                 ),
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pop(context, true);
                                   },
-                                  child: const Text('Save'),
+                                  child: const Text('Save', style: TextStyle(color: Colors.redAccent)),
                                 ),
                               ],
                             );

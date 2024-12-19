@@ -2,7 +2,6 @@ import 'package:aniview_app/widgets/viewReview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'reply_review.dart';
 
 class ReviewCard extends StatefulWidget {
   final String userid;
@@ -12,6 +11,7 @@ class ReviewCard extends StatefulWidget {
   final String date;
   final String imageUrl;
   final String reviewId;
+  final String currentUserId; 
 
   const ReviewCard({
     required this.userid,
@@ -21,6 +21,7 @@ class ReviewCard extends StatefulWidget {
     required this.date,
     required this.imageUrl,
     required this.reviewId,
+    required this.currentUserId,
     Key? key,
   }) : super(key: key);
 
@@ -57,6 +58,47 @@ class _ReviewCardState extends State<ReviewCard> {
     } catch (e) {
       print('Error fetching user data: $e');
     }
+  }
+
+  Future<void> deleteReview() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('reviews')
+          .doc(widget.reviewId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Review deleted successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete review: $e')),
+      );
+    }
+  }
+
+  void showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF201F31),
+        title: const Text('Delete Review', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to delete this review?', style: TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              deleteReview();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -168,38 +210,46 @@ class _ReviewCardState extends State<ReviewCard> {
                 textAlign: TextAlign.right,
               ),
               const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                  isScrollControlled: true,
-                  backgroundColor: const Color(0xFF2A2940),
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        isScrollControlled: true,
+                        backgroundColor: const Color(0xFF2A2940),
+                        context: context,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        builder: (context) => ViewReviewsModal(
+                          reviewId: widget.reviewId,
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Reply",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
                   ),
-                  builder: (context) => ViewReviewsModal(
-                    reviewId: widget.reviewId,
-                  ),
-                );
-                },
-                child: const Text(
-                  "Reply",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.right,
-                ),
+                  if (widget.userid == widget.currentUserId)
+                    GestureDetector(
+                      onTap: showDeleteConfirmationDialog,
+                      child: Icon(Icons.delete_outline_rounded, color: Colors.red,)
+                      
+                    ),
+                ],
               ),
             ],
           ),
         ),
-        SizedBox(
-          height: 20,
-        )
-        // if (showReplyContainer) const ReplyReview(),
+        const SizedBox(height: 20),
       ],
     );
   }

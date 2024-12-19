@@ -72,16 +72,18 @@ class _SearchPageState extends State<SearchPage> {
       setState(() {
         if (isNextPage) {
           animeData.addAll(animeList.map((anime) => {
-            'id': anime.id,
-            'img': anime.img,
-            'title': anime.title,
-          }));
+                'id': anime.id,
+                'img': anime.img,
+                'title': anime.title,
+              }));
         } else {
-          animeData = animeList.map((anime) => {
-            'id': anime.id,
-            'img': anime.img,
-            'title': anime.title,
-          }).toList();
+          animeData = animeList
+              .map((anime) => {
+                    'id': anime.id,
+                    'img': anime.img,
+                    'title': anime.title,
+                  })
+              .toList();
         }
 
         hasMoreData = hasNextPage;
@@ -109,43 +111,43 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> searchUsers() async {
-  if (_searchedText.text.isEmpty) return;
-
-  setState(() {
-    isLoading = true;
-    hasError = false;
-    searchedUsers = [];
-  });
-
-  try {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    print('Searching for users with query: ${_searchedText.text}');
-
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .where('username', isGreaterThanOrEqualTo: _searchedText.text)
-        .where('username', isLessThanOrEqualTo: '${_searchedText.text}\uf8ff')
-        .get();
-
-    final docs = querySnapshot.docs
-        .where((doc) => doc.id != currentUserId) // Exclude current user
-        .toList();
-
-    print('Found ${docs.length} users (excluding current user)');
+    if (_searchedText.text.isEmpty) return;
 
     setState(() {
-      searchedUsers = docs;
-      isLoading = false;
-      hasSearched = true;
+      isLoading = true;
+      hasError = false;
+      searchedUsers = [];
     });
-  } catch (e) {
-    print('Error searching users: $e');
-    setState(() {
-      isLoading = false;
-      hasError = true;
-    });
+
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      print('Searching for users with query: ${_searchedText.text}');
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isGreaterThanOrEqualTo: _searchedText.text)
+          .where('username', isLessThanOrEqualTo: '${_searchedText.text}\uf8ff')
+          .get();
+
+      final docs = querySnapshot.docs
+          .where((doc) => doc.id != currentUserId) // Exclude current user
+          .toList();
+
+      print('Found ${docs.length} users (excluding current user)');
+
+      setState(() {
+        searchedUsers = docs;
+        isLoading = false;
+        hasSearched = true;
+      });
+    } catch (e) {
+      print('Error searching users: $e');
+      setState(() {
+        isLoading = false;
+        hasError = true;
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +189,8 @@ class _SearchPageState extends State<SearchPage> {
                                   child: Center(
                                     child: Text(
                                       'No anime found.',
-                                      style: TextStyle(color: Colors.grey, fontSize: 18),
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 18),
                                     ),
                                   ),
                                 ),
@@ -209,7 +212,8 @@ class _SearchPageState extends State<SearchPage> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => AnimeDetailsPage(
+                                            builder: (context) =>
+                                                AnimeDetailsPage(
                                               animeId: anime['id']!,
                                             ),
                                           ),
@@ -217,36 +221,51 @@ class _SearchPageState extends State<SearchPage> {
                                       }
                                     },
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           child: Image.network(
                                             anime['img'] ?? '',
                                             height: 250,
                                             width: double.infinity,
                                             fit: BoxFit.cover,
-                                            loadingBuilder: (context, child, loadingProgress) {
-                                              if (loadingProgress == null) return child;
+                                            loadingBuilder: (context, child,
+                                                loadingProgress) {
+                                              if (loadingProgress == null)
+                                                return child;
                                               return Container(
                                                 height: 250,
                                                 width: double.infinity,
-                                                color: const Color.fromARGB(255, 21, 21, 33),
+                                                color: const Color.fromARGB(
+                                                    255, 21, 21, 33),
                                                 child: Center(
-                                                  child: CircularProgressIndicator(
-                                                    value: loadingProgress.expectedTotalBytes != null
-                                                        ? loadingProgress.cumulativeBytesLoaded /
-                                                            (loadingProgress.expectedTotalBytes ?? 1)
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            (loadingProgress
+                                                                    .expectedTotalBytes ??
+                                                                1)
                                                         : null,
                                                     color: Colors.redAccent,
                                                   ),
                                                 ),
                                               );
                                             },
-                                            errorBuilder: (context, error, stackTrace) => Container(
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Container(
                                               height: 180,
                                               color: Colors.grey,
-                                              child: const Icon(Icons.broken_image, color: Colors.white),
+                                              child: const Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.white),
                                             ),
                                           ),
                                         ),
@@ -278,10 +297,27 @@ class _SearchPageState extends State<SearchPage> {
                             ],
                           ),
                         )
-                  : const Center(
-                      child: Text(
-                        'Enter something in the Search',
-                        style: TextStyle(color: Colors.white),
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 250,
+                            width: double.infinity,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10),
+                              child:
+                                  Image.asset('assets/icons/ConanSearch.png'),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text(
+                            'Enter search...',
+                            style: TextStyle(color: Colors.grey, fontSize: 18),
+                          ),
+                        ],
                       ),
                     ),
             ),
@@ -336,15 +372,14 @@ class _SearchPageState extends State<SearchPage> {
             itemBuilder: (context, index) {
               return GestureDetector(
                 onTap: () {
-                  print(searchedUsers[index].id);
                   Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => UserProfilePage(
-                userId: searchedUsers[index].id,
-              ),
-            ),
-          );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserProfilePage(
+                        userId: searchedUsers[index].id,
+                      ),
+                    ),
+                  );
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12.0),
@@ -352,7 +387,8 @@ class _SearchPageState extends State<SearchPage> {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundImage: NetworkImage(searchedUsers[index]['imageUrl'] ?? ''),
+                        backgroundImage: NetworkImage(
+                            searchedUsers[index]['imageUrl'] ?? ''),
                         child: searchedUsers[index]['imageUrl'] == null
                             ? Icon(Icons.person, size: 40, color: Colors.grey)
                             : null,
@@ -360,7 +396,8 @@ class _SearchPageState extends State<SearchPage> {
                       const SizedBox(height: 8),
                       Text(
                         searchedUsers[index]['username'] ?? 'No username',
-                        style: const TextStyle(fontSize: 14, color: Colors.white),
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.white),
                       ),
                     ],
                   ),

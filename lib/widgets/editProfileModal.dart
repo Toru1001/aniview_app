@@ -69,20 +69,21 @@ class _EditProfileModalState extends State<EditProfileModal> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text('Confirm Changes'),
-              content: const Text('Are you sure you want to save the changes?'),
+              backgroundColor: Color(0xFF201F31),
+              title: const Text('Confirm Changes', style: TextStyle(color: Colors.white)),
+              content: const Text('Are you sure you want to save the changes?', style: TextStyle(color: Colors.white)),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(false);
                   },
-                  child: const Text('Cancel'),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(true);
                   },
-                  child: const Text('Confirm'),
+                  child: const Text('Confirm', style: TextStyle(color: Colors.redAccent)),
                 ),
               ],
             );

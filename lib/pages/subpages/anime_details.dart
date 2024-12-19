@@ -474,50 +474,48 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
   }
 
   Column _detailsGroup(Map<String, String> anime) {
-    return Column(
-      children: [
-        _details('Titles: ', 'titles', anime),
-        const SizedBox(
-          height: 10,
-        ),
-        _details('Aired: ', 'aired', anime),
-        const SizedBox(
-          height: 10,
-        ),
-        _details('Studio: ', 'studio', anime),
-        const SizedBox(
-          height: 10,
-        ),
-        _details('Type: ', 'type', anime),
-      ],
-    );
-  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _details('Titles: ', 'titles', anime),
+      const SizedBox(height: 10),
+      _details('Aired: ', 'aired', anime),
+      const SizedBox(height: 10),
+      _details('Studio: ', 'studio', anime),
+      const SizedBox(height: 10),
+      _details('Type: ', 'type', anime),
+    ],
+  );
+}
 
-  Row _details(
-      final String text, final String details, Map<String, String> anime) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          text,
-          style: const TextStyle(
-              fontSize: 16,
-              color: Colors.redAccent,
-              fontWeight: FontWeight.w500),
+Row _details(
+    final String text, final String details, Map<String, String> anime) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.redAccent,
+          fontWeight: FontWeight.w500,
         ),
-        Container(
-          width: 320,
-          child: Text(
-            anime[details] ?? '',
-            style: const TextStyle(
-                fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w400),
-            softWrap: true,
+      ),
+      Expanded(
+        child: Text(
+          anime[details] ?? '',
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+            fontWeight: FontWeight.w400,
           ),
-        )
-      ],
-    );
-  }
+          softWrap: true,
+        ),
+      ),
+    ],
+  );
+}
+
 
   Divider _divider() {
     return const Divider(
@@ -582,92 +580,98 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
         ),
         Container(
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                children: [
-                  const Text(
-                    'Rating',
-                    style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 18),
-                  ),
-                  Text(
-                    animeRating.toString(),
-                    style: const TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 15),
-                  )
-                ],
-              ),
-              const SizedBox(
-                width: 20,
-              ),
-              const Text(
-                '|',
-                style: TextStyle(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.w200,
-                    fontSize: 38),
-              ),
-              const SizedBox(
-                width: 20,
-              ),
-              Column(
-                children: [
-                  const Text(
-                    'Status',
-                    style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 18),
-                  ),
-                  Text(
-                    anime['status'] ?? '',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w400,
-                      fontSize: 15,
+              Container(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Rating',
+                      style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16),
                     ),
-                    textAlign: TextAlign.center,
-                    softWrap: true,
-                    overflow: TextOverflow.visible,
-                  ),
-                ],
+                    Text(
+                      animeRating.toString(),
+                      style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 15),
+                    )
+                  ],
+                ),
               ),
-              const SizedBox(
-                width: 20,
-              ),
-              const Text(
-                '|',
-                style: TextStyle(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.w200,
-                    fontSize: 38),
-              ),
-              const SizedBox(
-                width: 20,
-              ),
-              Column(
-                children: [
-                  const Text(
-                    'Episodes',
-                    style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 18),
-                  ),
-                  Text(
-                    anime['episodes'] ?? '',
-                    style: const TextStyle(
+              // const SizedBox(
+              //   width: 10,
+              // ),
+              // const Text(
+              //   '|',
+              //   style: TextStyle(
+              //       color: Colors.redAccent,
+              //       fontWeight: FontWeight.w200,
+              //       fontSize: 38),
+              // ),
+              // const SizedBox(
+              //   width: 10,
+              // ),
+              Container(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Status',
+                      style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16),
+                    ),
+                    Text(
+                      anime['status'] ?? '',
+                      style: const TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.w400,
-                        fontSize: 15),
-                  )
-                ],
+                        fontSize: 15,
+                      ),
+                      textAlign: TextAlign.center,
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ],
+                ),
+              ),
+              // const SizedBox(
+              //   width: 10,
+              // ),
+              // const Text(
+              //   '|',
+              //   style: TextStyle(
+              //       color: Colors.redAccent,
+              //       fontWeight: FontWeight.w200,
+              //       fontSize: 38),
+              // ),
+              // const SizedBox(
+              //   width: 10,
+              // ),
+              Container(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Episodes',
+                      style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16),
+                    ),
+                    Text(
+                      anime['episodes'] ?? '',
+                      style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 15),
+                    )
+                  ],
+                ),
               ),
             ],
           ),
@@ -1246,16 +1250,17 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage> {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(title),
-            content: Text(content),
+            backgroundColor: Color(0xFF201F31),
+            title: Text(title, style: TextStyle(color: Colors.white)),
+            content: Text(content, style: TextStyle(color: Colors.white)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Confirm'),
+                child: const Text('Confirm', style: TextStyle(color: Colors.redAccent)),
               ),
             ],
           ),
